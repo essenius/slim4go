@@ -1,7 +1,9 @@
 # We want to ignore all files without extension (these are binaries built on Linux/Mac)
+# but that can't be done directly. So we do it the other way around
 # Ignore all
 *
-# Unignore all with extensions
-!*.*
+# Unignore this .gitignore and all files with extension go
+!*.go
+!.gitignore
 # Unignore all dirs
 !*/

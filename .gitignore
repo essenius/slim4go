@@ -5,9 +5,6 @@
 *.so
 *.dylib
 
-# Built executables (on Linux/Mac)
-/cmd/**/*.
-
 # Test binary, built with `go test -c`
 *.test
 

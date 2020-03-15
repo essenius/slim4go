@@ -1,0 +1,7 @@
+# We want to ignore all files without extension (these are binaries built on Linux/Mac)
+# Ignore all
+*
+# Unignore all with extensions
+!*.*
+# Unignore all dirs
+!*/

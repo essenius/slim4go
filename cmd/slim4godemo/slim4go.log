@@ -1,0 +1,71 @@
+2020/03/10 23:10:30 SlimLog.go:55: Setup trace for production
+2020/03/10 23:10:30 context.go:64: Post args: []
+2020/03/10 23:10:30 context.go:34: Missing port specification. Expected params [-s timeout] port
+2020/03/10 23:10:32 SlimLog.go:55: Setup trace for production
+2020/03/10 23:10:32 context.go:64: Post args: [1]
+2020/03/10 23:10:32 slimMessenger.go:36: Using pipes
+2020/03/10 23:10:32 SlimPipe.go:45: Slim -- V0.5
+
+2020/03/10 23:10:44 SlimPipe.go:34: Read: 000003:bye
+2020/03/10 23:10:44 SlimMarshaller.go:86: Less than '9'' chars left. Definitely no list
+2020/03/10 23:10:44 SlimMarshaller.go:141: Returning bye
+2020/03/10 23:10:44 SlimServer.go:57: Request:  000003:bye
+2020/03/11 08:12:21 SlimLog.go:55: Setup trace for production
+2020/03/11 08:12:21 context.go:63: Post args: [8888]
+2020/03/11 08:12:21 slimMessenger.go:39: Using socket on port  8888
+2020/03/11 08:12:21 SlimSocket.go:39: Listening at tcp  :8888
+2020/03/11 08:13:34 SlimLog.go:55: Setup trace for production
+2020/03/11 08:13:34 context.go:63: Post args: [1]
+2020/03/11 08:13:34 slimMessenger.go:36: Using pipes
+2020/03/11 08:13:34 SlimPipe.go:45: Slim -- V0.5
+
+2020/03/11 08:13:41 SlimPipe.go:34: Read: 0000000003:bye
+2020/03/11 08:13:41 SlimMarshaller.go:86: Less than '9'' chars left. Definitely no list
+2020/03/11 08:13:41 SlimMarshaller.go:141: Returning bye
+2020/03/11 08:13:41 SlimServer.go:57: Request:  000003:bye
+2020/03/14 19:22:48 SlimLog.go:55: Setup trace for production
+2020/03/14 19:22:48 slimMessenger.go:37: Using pipes
+2020/03/14 20:25:07 SlimLog.go:55: Setup trace for production
+2020/03/14 20:25:07 slimMessenger.go:40: Using pipes
+2020/03/14 20:25:07 SlimPipe.go:63: waiting
+2020/03/14 20:25:37 SlimPipe.go:82: Timeout = 30s
+2020/03/14 20:33:04 SlimLog.go:55: Setup trace for production
+2020/03/14 20:33:04 slimMessenger.go:40: Using pipes
+2020/03/14 20:33:04 SlimPipe.go:63: waiting
+2020/03/14 20:59:45 SlimLog.go:55: Setup trace for production
+2020/03/14 20:59:45 slimMessenger.go:43: Using socket on port  2345
+2020/03/14 20:59:45 SlimSocket.go:56: Port 2345
+2020/03/14 21:05:46 SlimLog.go:55: Setup trace for production
+2020/03/14 21:05:46 slimMessenger.go:33: Timeout is 3s
+2020/03/14 21:05:46 slimMessenger.go:45: Using socket on port  2345
+2020/03/14 21:05:46 SlimSocket.go:56: Port 2345
+2020/03/14 21:06:17 SlimLog.go:55: Setup trace for production
+2020/03/14 21:06:17 slimMessenger.go:33: Timeout is 3s
+2020/03/14 21:06:17 slimMessenger.go:42: Using pipes
+2020/03/14 21:09:02 SlimLog.go:55: Setup trace for production
+2020/03/14 21:09:02 slimMessenger.go:33: Timeout is 3s
+2020/03/14 21:09:02 slimMessenger.go:42: Using pipes
+2020/03/14 21:09:05 SlimPipe.go:77: Timeout (3s)
+2020/03/14 21:11:31 SlimLog.go:55: Setup trace for production
+2020/03/14 21:11:31 slimMessenger.go:33: Timeout is 3s
+2020/03/14 21:11:31 slimMessenger.go:42: Using pipes
+2020/03/14 21:12:18 SlimLog.go:55: Setup trace for production
+2020/03/14 21:12:18 context.go:36: invalid value "2-s" for flag -t: parse error
+2020/03/14 21:12:21 SlimLog.go:55: Setup trace for production
+2020/03/14 21:12:21 slimMessenger.go:33: Timeout is 2s
+2020/03/14 21:12:21 slimMessenger.go:42: Using pipes
+2020/03/14 21:12:21 SlimServer.go:60: Reading
+2020/03/14 21:12:23 SlimPipe.go:77: Timeout (2s)
+2020/03/14 21:12:23 SlimServer.go:63: Read error %v readLength: Could not find next delimiter ':'
+2020/03/14 21:13:50 SlimLog.go:55: Setup trace for production
+2020/03/14 21:13:50 slimMessenger.go:33: Timeout is 2s
+2020/03/14 21:13:50 slimMessenger.go:42: Using pipes
+2020/03/14 21:13:50 SlimServer.go:60: Reading
+2020/03/14 21:13:52 SlimPipe.go:77: Timeout (2s)
+2020/03/14 21:13:52 SlimServer.go:63: Read error readLength: Could not find next delimiter ':'
+2020/03/14 21:15:38 SlimLog.go:55: Setup trace for production
+2020/03/14 21:15:38 slimMessenger.go:33: Timeout is 2s
+2020/03/14 21:15:38 slimMessenger.go:42: Using pipes
+2020/03/14 21:15:38 SlimServer.go:60: Reading
+2020/03/14 21:15:40 SlimPipe.go:77: Timeout (2s)
+2020/03/14 21:15:40 SlimServer.go:63: Read error readLength: Could not find next delimiter ':' (Timeout (2s))

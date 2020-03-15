@@ -1,0 +1,122 @@
+2020/02/26 12:06:58 SlimServer.go:23: Using pipes
+2020/02/26 12:06:58 SlimPipe.go:39: Slim -- V0.5
+
+2020/02/26 12:21:16 SlimServer.go:26: Using socket on port  8475
+2020/02/26 12:22:54 SlimServer.go:26: Using socket on port  8475
+2020/02/26 12:25:15 SlimServer.go:26: Using socket on port  8475
+2020/02/26 12:28:31 SlimServer.go:26: Using socket on port  8475
+2020/02/26 12:29:02 SlimServer.go:26: Using socket on port  8475
+2020/02/26 12:29:09 SlimServer.go:23: Using pipes
+2020/02/26 12:29:09 SlimPipe.go:39: Slim -- V0.5
+
+2020/02/26 13:34:17 SlimServer.go:23: Using pipes
+2020/02/26 13:34:17 SlimPipe.go:39: Slim -- V0.5
+
+2020/02/26 13:50:33 SlimServer.go:46: Request:  000100:[000001:000083:[000004:000015:scriptTable_0_0:000004:make:000016:scriptTableActor:000007:Counter:]:]
+2020/02/26 13:50:33 SlimServer.go:49: Response:  000059:[000001:000042:[000002:000015:scriptTable_0_0:000002:OK:]:]
+2020/02/26 13:50:33 SlimPipe.go:39: 000059:[000001:000042:[000002:000015:scriptTable_0_0:000002:OK:]:]
+2020/02/26 13:51:03 SlimServer.go:38: Error receiving request message: ReadLength: Could not interpret length '
+000003'
+2020/02/26 13:52:19 SlimServer.go:23: Using pipes
+2020/02/26 13:52:19 SlimPipe.go:39: Slim -- V0.5
+
+2020/02/26 13:52:25 SlimServer.go:38: Error receiving request message: ReadLength: Could not interpret length '
+0000003'
+2020/02/26 13:52:28 SlimServer.go:23: Using pipes
+2020/02/26 13:52:28 SlimPipe.go:39: Slim -- V0.5
+
+2020/02/26 14:40:21 SlimServer.go:23: Using pipes
+2020/02/26 14:40:21 SlimPipe.go:39: Slim -- V0.5
+
+2020/02/26 14:40:35 SlimServer.go:46: Request:  000100:[000001:000083:[000004:000015:scriptTable_0_0:000004:make:000016:scriptTableActor:000007:Counter:]:]
+2020/02/26 14:40:35 SymbolTable.go:21: false
+2020/02/26 14:40:35 StatementProcessor.go:87: Make: scriptTableActor = Counter ([])
+2020/02/26 14:40:35 StatementProcessor.go:98: actor type: *slimprocessor.Actor value:&{scriptTableActor 0xc000010558 Counter 0xc000006060}
+2020/02/26 14:40:35 StatementProcessor.go:100: anActor type *demofixtures.Counter 
+2020/02/26 14:40:35 StatementProcessor.go:101: make: scriptTableActor = instantiated Counter
+2020/02/26 14:40:35 SlimServer.go:49: Response:  000059:[000001:000042:[000002:000015:scriptTable_0_0:000002:OK:]:]
+2020/02/26 14:40:35 SlimPipe.go:39: 000059:[000001:000042:[000002:000015:scriptTable_0_0:000002:OK:]:]
+2020/02/28 22:43:57 SlimLog.go:44: Setup trace for production
+2020/02/28 22:43:57 SymbolTable.go:23: NonTextSymbol: input is StandardLibrary
+2020/02/28 22:43:57 SymbolTable.go:35: Not a symbol
+2020/02/28 22:43:57 StatementProcessor.go:87: Make text: libraryStandard = StandardLibrary ([])
+2020/02/28 22:43:57 StatementProcessor.go:98: actor type: *slimprocessor.Actor value:&{libraryStandard 0x6fdb20 StandardLibrary 0xc0000ac038}
+2020/02/28 22:43:57 StatementProcessor.go:100: anActor type *slimprocessor.StandardLibrary 
+2020/02/28 22:43:57 StatementProcessor.go:101: make: libraryStandard = instantiated StandardLibrary
+2020/02/28 22:43:57 SlimServer.go:26: Using socket on port  8475
+2020/02/28 22:47:02 SlimLog.go:44: Setup trace for production
+2020/02/28 22:47:02 SymbolTable.go:23: NonTextSymbol: input is StandardLibrary
+2020/02/28 22:47:02 SymbolTable.go:35: Not a symbol
+2020/02/28 22:47:02 StatementProcessor.go:87: Make text: libraryStandard = StandardLibrary ([])
+2020/02/28 22:47:02 StatementProcessor.go:98: actor type: *slimprocessor.Actor value:&{libraryStandard 0x6fdb20 StandardLibrary 0xc000006048}
+2020/02/28 22:47:02 StatementProcessor.go:100: anActor type *slimprocessor.StandardLibrary 
+2020/02/28 22:47:02 StatementProcessor.go:101: make: libraryStandard = instantiated StandardLibrary
+2020/02/28 22:47:02 SlimServer.go:26: Using socket on port  8475
+2020/02/28 22:47:42 SlimLog.go:44: Setup trace for production
+2020/02/28 22:47:42 SymbolTable.go:23: NonTextSymbol: input is StandardLibrary
+2020/02/28 22:47:42 SymbolTable.go:35: Not a symbol
+2020/02/28 22:47:42 StatementProcessor.go:87: Make text: libraryStandard = StandardLibrary ([])
+2020/02/28 22:47:42 StatementProcessor.go:98: actor type: *slimprocessor.Actor value:&{libraryStandard 0x6fdb20 StandardLibrary 0xc000006048}
+2020/02/28 22:47:42 StatementProcessor.go:100: anActor type *slimprocessor.StandardLibrary 
+2020/02/28 22:47:42 StatementProcessor.go:101: make: libraryStandard = instantiated StandardLibrary
+2020/02/28 22:47:42 SlimServer.go:26: Using socket on port  8475
+2020/02/28 22:48:33 SlimLog.go:44: Setup trace for production
+2020/02/28 22:48:33 SymbolTable.go:23: NonTextSymbol: input is StandardLibrary
+2020/02/28 22:48:33 SymbolTable.go:35: Not a symbol
+2020/02/28 22:48:33 StatementProcessor.go:87: Make text: libraryStandard = StandardLibrary ([])
+2020/02/28 22:48:33 StatementProcessor.go:98: actor type: *slimprocessor.Actor value:&{libraryStandard 0x6fdb20 StandardLibrary 0xc0000ac038}
+2020/02/28 22:48:33 StatementProcessor.go:100: anActor type *slimprocessor.StandardLibrary 
+2020/02/28 22:48:33 StatementProcessor.go:101: make: libraryStandard = instantiated StandardLibrary
+2020/02/28 22:48:33 SlimServer.go:26: Using socket on port  8475
+2020/02/28 22:55:57 SlimLog.go:44: Setup trace for production
+2020/02/28 22:55:57 SymbolTable.go:23: NonTextSymbol: input is StandardLibrary
+2020/02/28 22:55:57 SymbolTable.go:35: Not a symbol
+2020/02/28 22:55:57 StatementProcessor.go:87: Make text: libraryStandard = StandardLibrary ([])
+2020/02/28 22:55:57 StatementProcessor.go:98: actor type: *slimprocessor.Actor value:&{libraryStandard 0x777b20 StandardLibrary 0xc0000b0038}
+2020/02/28 22:55:57 StatementProcessor.go:100: anActor type *slimprocessor.StandardLibrary 
+2020/02/28 22:55:57 StatementProcessor.go:101: make: libraryStandard = instantiated StandardLibrary
+2020/02/28 22:55:57 SlimServer.go:26: Using socket on port  4875
+2020/02/28 22:56:38 SlimSocket.go:46: false
+2020/02/28 22:56:38 SlimSocket.go:47: socket port: 4875
+2020/02/28 23:00:25 SlimLog.go:44: Setup trace for production
+2020/02/28 23:00:25 SymbolTable.go:23: NonTextSymbol: input is StandardLibrary
+2020/02/28 23:00:25 SymbolTable.go:35: Not a symbol
+2020/02/28 23:00:25 StatementProcessor.go:87: Make text: libraryStandard = StandardLibrary ([])
+2020/02/28 23:00:25 StatementProcessor.go:98: actor type: *slimprocessor.Actor value:&{libraryStandard 0x6fdb20 StandardLibrary 0xc0000ac038}
+2020/02/28 23:00:25 StatementProcessor.go:100: anActor type *slimprocessor.StandardLibrary 
+2020/02/28 23:00:25 StatementProcessor.go:101: make: libraryStandard = instantiated StandardLibrary
+2020/02/28 23:00:25 SlimServer.go:26: Using socket on port  8475
+2020/02/28 23:00:39 SlimLog.go:44: Setup trace for production
+2020/02/28 23:00:39 SymbolTable.go:23: NonTextSymbol: input is StandardLibrary
+2020/02/28 23:00:39 SymbolTable.go:35: Not a symbol
+2020/02/28 23:00:39 StatementProcessor.go:87: Make text: libraryStandard = StandardLibrary ([])
+2020/02/28 23:00:39 StatementProcessor.go:98: actor type: *slimprocessor.Actor value:&{libraryStandard 0x6fdb20 StandardLibrary 0xc000006048}
+2020/02/28 23:00:39 StatementProcessor.go:100: anActor type *slimprocessor.StandardLibrary 
+2020/02/28 23:00:39 StatementProcessor.go:101: make: libraryStandard = instantiated StandardLibrary
+2020/02/28 23:00:39 SlimServer.go:26: Using socket on port  8475
+2020/02/28 23:00:39 SlimSocket.go:28: Listening at tcp  :8475
+2020/02/29 14:54:40 SlimLog.go:44: Setup trace for production
+2020/02/29 14:54:40 slimMessenger.go:24: Using pipes
+2020/02/29 14:54:40 SlimPipe.go:39: Slim -- V0.5
+
+2020/02/29 14:56:39 SlimLog.go:44: Setup trace for production
+2020/02/29 14:56:39 slimMessenger.go:24: Using pipes
+2020/02/29 14:56:39 SlimPipe.go:39: Slim -- V0.5
+
+2020/02/29 14:56:48 SlimServer.go:50: Request:  000003:bye
+2020/02/29 19:59:25 SlimLog.go:44: Setup trace for production
+2020/02/29 19:59:25 context.go:16: Usage: C:\Users\Rik.Essenius\OneDrive - Shell\src\go\src\github.com\essenius\goslimdemo\goslimdemo.exe port
+2020/02/29 19:59:33 SlimLog.go:44: Setup trace for production
+2020/02/29 19:59:33 slimMessenger.go:24: Using pipes
+2020/02/29 19:59:33 SlimPipe.go:39: Slim -- V0.5
+
+2020/02/29 19:59:40 SlimServer.go:50: Request:  000003:bye
+2020/03/04 13:02:57 SlimLog.go:44: Setup trace for production
+2020/03/04 13:02:57 slimMessenger.go:24: Using pipes
+2020/03/04 13:02:57 SlimObject.go:40: InjectClasses == nil: false
+2020/03/04 13:02:57 SlimObject.go:91: addObject instance libraryStandard class StandardLibrary
+2020/03/04 13:02:57 SlimObject.go:48: aClass type: *slimprocessor.class
+2020/03/04 13:02:57 SlimObject.go:49: classes == nil false
+2020/03/04 13:02:57 SlimPipe.go:39: Slim -- V0.5
+
+2020/03/04 13:03:03 SlimServer.go:45: Request:  000003:bye

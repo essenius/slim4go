@@ -1,0 +1,6 @@
+We use this test to test the timeout functionality
+With slim.flags (on the suite page), we instructed slim4go to wait max 2 seconds for a response to a command
+This command waits 10 seconds, so should timeout
+
+|script|Waiter|
+|wait  |10    |

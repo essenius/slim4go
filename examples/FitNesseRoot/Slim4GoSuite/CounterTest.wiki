@@ -1,0 +1,42 @@
+Very simple script demo
+
+!|script|Counter|6|
+|check  |Value  |6|
+|CountUp          |
+|check  |Value  |7|
+
+If you don't repeat the fixture name, it takes the previous one
+
+!|script              |
+|CountUp              |
+|$current=|Value      |
+|CountUp              |
+|check    |Value  |9  |
+|SetCount |$current   |
+|check    |Value  |8  |
+|$fixture=|get fixture|
+
+|script               |
+|$count1=|echo|Counter|
+|$ount=  |echo|ounter |
+
+You can use symbols as script names. If it is a string, it will create a new instance
+
+|script|$count1|
+|check |Value|0|
+
+If it is an object, it will use the existing object
+
+|script|$fixture|
+|check |Value |8|
+|push fixture   |
+|countUp        |
+|check |value |9|
+|pop fixture    |
+|check |value |8|
+
+You can also use partial names. Then the symbol is always interpreted as a string
+
+!|script|C$ount|23|
+|check  |Value |23|
+

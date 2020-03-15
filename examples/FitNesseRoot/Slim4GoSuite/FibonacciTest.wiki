@@ -1,0 +1,15 @@
+A decision table in action
+
+|Fibonacci Fixture                                                           |
+|Input Value|Fibonacci?             |#comment                                |
+|-1         |Input can't be negative|Cannot handle negative Fibonacci numbers|
+|0          |0                      |by definition                           |
+|1          |1                      |by definition                           |
+|2          |1                      |Fibonacci(0) + Fibonacci(1)             |
+|8          |21                     |Fibonacci(6) + Fibonacci(7)             |
+|20         |6765                   |Fibonacci(18) + Fibonacci(19)           |
+|92         |7540113804746346429    |largest result fitting in an int64      |
+|93         |Overflow               |Result doesn't fit in int64             |
+|a          |                       |wrong                                   |
+
+The last one shows how slim4go deals with conversion errors

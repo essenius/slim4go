@@ -1,0 +1,22 @@
+This suite shows a number of demos for slim4go.
+It uses the fixtures defined in the examples/demofixtures folder
+
+These variables are needed to configure FitNesse for slim4go
+!define TEST_SYSTEM {slim}
+!define COMMAND_PATTERN {%m}
+!define slim.flags {-s 2 -t 30}
+
+Activate the following variable to the right location. 
+!- Mac/Linux: !define TEST_RUNNER {/path/to/cmd/slim4godemo/slim4godemo} -!
+!- Windows: !define TEST_RUNNER {c:\path\to\cmd\slim4godemo\slim4godemo.exe} -!
+
+You can also set these variables in plugins.properties as follows:
+
+TEST_SYSTEM=slim
+COMMAND_PATTERN=%m
+TEST_RUNNER=/path/to/cmd/slim4godemo/slim4godemo
+slim.flags=-s 2 -t 30 
+
+Note that not all these tests pass - that's on purpose, as some show the capabilities slim4go has to report back issues
+
+!contents -R2 -g -p -f -h

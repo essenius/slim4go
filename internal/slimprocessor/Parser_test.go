@@ -62,7 +62,6 @@ func TestParserIsPredefined(t *testing.T) {
 	assertPredefined(false, aStruct, "struct")
 }
 
-// TODO: change other test helper functions to use this pattern
 func TestParserToMatchingCloseBracket(t *testing.T) {
 	assertMatchingCloseBracket := func(input string, expectedResult string, expectedRest string, errorMessage string, description string) {
 		actualResult, actualRest, err := toMatchingClosingBracket(input)

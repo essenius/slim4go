@@ -1,0 +1,73 @@
+This demo shows how you can use objects in tests.
+
+!define CF_Equality {-40} 
+!define KF_Equality {574.5875}
+
+First a basic use of a temperature conversion test
+
+!|script|Temperature Converter|
+|$temp= |Convert |68 F  |to |C|
+|check  |echo    |$temp |20   |
+|check|convert|${CF_Equality} C|to|F|${CF_Equality}|
+|check|convert|${KF_Equality}K |to|F|${KF_Equality}|
+|show   |Convert |      |to |K|
+
+The last line shows how slim4go deals with panics that occur in the fixtures
+
+You can use variables, and evaluations take place when they are used
+
+!define TemperatureC {20}
+!define TemperatureF {${=${TemperatureC} * 9/5 + 32=}}
+
+!|script|Temperature Converter                         |
+|check  |Convert|${CF_Equality} C |to|F|${CF_Equality} |
+|check  |convert|${TemperatureF} F|to|C|${TemperatureC}|
+
+!define TemperatureC {25}
+
+!|script                                             |
+|check|convert|${TemperatureF} F|to|C|${TemperatureC}|
+
+We create a Temperature object and put a reference to it in a symbol
+
+!|script  |Temperature|212F|
+|$boiling=|get fixture     |
+|show     |get fixture     |
+
+Now we can use that object as a parameter to a fixture funtion
+
+!|script|Temperature Converter    |
+|check  |convert|$boiling|to|C|100|
+
+Now we are at it, here are two quick examples of how to create a decision table from a scenario
+
+|scenario|temperature|input |is|fahrenheit|F|celsius|C|kelvin|K|
+|check   |convert    |@input|to|F         |@fahrenheit         |
+|check   |convert    |@input|to|C         |@celsius            |
+|check   |convert    |@input|to|K         |@kelvin             |
+
+|script     |temperature converter     |
+|temperature|20 C|is|68|F|20|C|293.15|K|
+|temperature|32 F|is|32|F|0 |C|273.15|K|
+
+|decision:temperature is F C K  |
+|input|fahrenheit|celsius|kelvin|
+|20 C |68        |20     |293.15|
+|32 F |32        |0      |273.15|
+
+|scenario|Convert table _ _ _ _|input,from,to,result?|
+|$result=|convert              |@input @from |to |@to|
+
+|decision:convert table|
+|input |from|to|result?|
+|20    |C   |F |68     |
+|32    |F   |K |273.15 |
+
+This shows how you can default certain input parameters
+
+|decision:convert table|given|from|C|to|F|
+|input                 |result?          |
+|20                    |68               |
+|0                     |32               |
+|100                   |212              |
+|-40                   |-40              |

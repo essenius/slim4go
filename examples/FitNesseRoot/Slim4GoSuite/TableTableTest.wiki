@@ -1,0 +1,16 @@
+The value in the first column will be returned in the second column. 
+A third column is added with the original value of the second column
+A new row is added at the bottom
+
+|table:Table Fixture|
+|pass                 |This should pass      |
+|pass:pass message    |Pass with message     |
+|fail                 |This should fail      |
+|fail:fail message    |Fail with message     |
+|ignore               |This should be ignored|
+|ignore:ignore message|ignore with message   |
+|report:report message|Report with message   |
+|error:error message  |Problem               |
+|                     |nothing should change |
+|no change            |no change             |
+|change               |this should fail      |

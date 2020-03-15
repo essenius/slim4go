@@ -1,0 +1,18 @@
+Maps can be populated via the hash table option in FitNesse
+
+|script  |Dictionary               |
+|Set     |!{name:rik, id:res}      |
+|check   |get value|name|rik       |
+|add item|hobby    |    |developing|
+|ensure  |contains |hobby          |
+|$dict=  |Get                      |
+
+|script|Dictionary   |
+|Set   |$dict        |
+|ensure|contains|name|
+
+Another way of specifying a dictionary is using an HTML table
+
+|script|Dictionary|
+|Set|<table><tr><td>name</td><td>rik</td></tr><tr><td>id</td><td>res</td></tr></table>|
+|check   |get value|name|rik       |

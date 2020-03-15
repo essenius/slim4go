@@ -1,0 +1,6 @@
+# Ignore everything but the Slim4GuDuite folder
+
+/*
+/*/
+!/Slim4GoSuite/
+!.gitignore

@@ -14,7 +14,7 @@ package demofixtures
 import (
 	"fmt"
 
-	"github.com/essenius/slim4go/internal/demosut"
+	"github.com/essenius/slim4go/examples/demosut"
 )
 
 // FibonacciFixture is an example how to create a fixture for a decision table.

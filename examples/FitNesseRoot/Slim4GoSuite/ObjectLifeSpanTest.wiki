@@ -1,0 +1,16 @@
+This demo shows that different instances of a fixture have different data
+It also shows how you can temporarily set aside a fixture via push and pop.
+
+!|scenario|R2D2 differs from|id   |
+|push fixture                     |
+|start    |memo object      |R2D2 |
+|check    |data             |R2D2 |
+|check    |ID               |!=@id|
+|pop fixture                      |
+
+!|script          |memo object|C3PO|
+|check            |data       |C3PO|
+|$id=             |ID             |
+|R2D2 differs from|$id             |
+|check            |data       |C3PO|
+|check            |ID         |$id |

@@ -1,0 +1,10 @@
+This demo shows how you can specify slices (arrays) 
+
+|script           |Array                                 |
+|Set Int Array    |[1, 2, 3, 5, 8, 13]                   |
+|check            |int array    |[1, 2, 3, 5, 8, 13]     |
+|Set String Matrix|[[a, b, c], [d, e], [f]]              |
+|check            |String Matrix|[[a, b, c], [d, e], [f]]|
+|Set Int Array    |[1, 2, 3, a, 8, 13]                   |
+
+This last one shows how slim4go deals with conversion errors

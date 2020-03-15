@@ -13,7 +13,7 @@ package main
 
 import (
 	"github.com/essenius/slim4go"
-	"github.com/essenius/slim4go/internal/demofixtures"
+	"github.com/essenius/slim4go/examples/demofixtures"
 )
 
 func main() {

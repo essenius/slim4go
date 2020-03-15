@@ -1,0 +1,7 @@
+Without ensure/reject/check, a true response passes, a false response fails and another value ignores
+
+|script     |
+|echo|true  |
+|echo|false |
+|echo|string|
+

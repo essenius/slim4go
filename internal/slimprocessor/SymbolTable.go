@@ -15,8 +15,6 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
-
-	"github.com/essenius/slim4go/internal/slimentity"
 )
 
 // Definitions and constructors
@@ -56,34 +54,6 @@ func (symbols *symbolTable) NonTextSymbol(symbolName string) (interface{}, bool)
 		}
 	}
 	return nil, false
-}
-
-func (symbols *symbolTable) ReplaceSymbolsIn(source string) string {
-	regex := regexp.MustCompile(`\$` + symbolPattern)
-	return regex.ReplaceAllStringFunc(source, symbols.ReplaceValue)
-}
-
-func (symbols *symbolTable) ReplaceSymbols(source interface{}) interface{} {
-	if slimentity.IsSlimList(source) {
-		sourceList := source.(*slimentity.SlimList)
-		result := slimentity.NewSlimList()
-		for _, value := range *sourceList {
-			result.Append(symbols.ReplaceSymbols(value))
-		}
-		return result
-	}
-	return symbols.ReplaceSymbolsIn(source.(string))
-}
-
-func (symbols *symbolTable) ReplaceValue(symbolName string) string {
-	if symbolValue, ok := symbols.ValueOf(symbolName); ok {
-		symbolValueValue := reflect.ValueOf(symbolValue)
-		if isObject(symbolValueValue) {
-			return stringifyObject(symbolValueValue).(string)
-		}
-		return symbolValue.(string)
-	}
-	return symbolName
 }
 
 func (symbols *symbolTable) SetSymbol(symbol string, value interface{}) error {

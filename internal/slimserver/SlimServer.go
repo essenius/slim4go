@@ -57,14 +57,12 @@ func (server *SlimServer) Serve() error {
 	}
 
 	for {
-		slimlog.Trace.Println("Reading")
 		request, err3 := slimentity.ReadRequest(server.messenger)
 		if err3 != nil {
 			slimlog.Trace.Printf("Read error %v", err3)
 			return err3
 		}
-		slimlog.Trace.Println("After read")
-		slimlog.Trace.Println("Request: ", slimentity.Marshal(request)) //request.Marshal())
+		slimlog.Trace.Println("Request: ", slimentity.Marshal(request))
 		if !slimentity.IsSlimList(request) {
 			if request.(string) == slimprotocol.Bye() {
 				return nil

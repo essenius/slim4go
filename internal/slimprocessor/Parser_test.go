@@ -9,6 +9,9 @@
 //   is distributed on an "AS IS" BASIS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and limitations under the License.
 
+
+// TODO: this file is pretty large. See if we can split it up logically
+
 package slimprocessor
 
 import (
@@ -17,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/essenius/slim4go/internal/assert"
+	"github.com/essenius/slim4go/internal/slimentity"
 )
 
 type demoStruct1 struct {
@@ -45,10 +49,22 @@ func (demo2 *demoStruct2) Parse(input string) {
 
 type emptyStruct struct{}
 
+func TestParserCallFunction(t *testing.T) {
+	parser := injectParser()
+	result1, err1 := parser.callFunction(reflect.ValueOf(NewObjectWithPanic), []string{})
+	assert.Equals(t, "Panic: Object creation failed", err1.Error(), "Panicking function")
+	assert.Equals(t, nil, result1, "No result with panic")
+	messengerInstance, err2 := parser.callFunction(reflect.ValueOf(NewMessenger), []string{})
+	assert.Equals(t, nil, err2, "No error calling function")
+	assert.Equals(t, "*slimprocessor.Messenger", reflect.TypeOf(messengerInstance).String(), "Type of instance OK")
+	result3, err3 := parser.callFunction(reflect.ValueOf(NewMessenger), []string{"q"})
+	assert.Equals(t, "Expected 0 parameter(s) but got 1", err3.Error(), "Create messenger with wrong parameter")
+	assert.Equals(t, "", result3, "No result with parameter error")
+}
+
 func TestParserIsPredefined(t *testing.T) {
 	assertPredefined := func(isPredefined bool, value interface{}, description string) {
-		assert.IsTrue(t, !isObject(reflect.ValueOf("")), "empty string is no object")
-		assert.IsTrue(t, isObject(reflect.ValueOf(&demoStruct1{})), "pointer to demoStruct1 is an object")
+		assert.Equals(t, isPredefined, isPredefinedType(reflect.TypeOf(value)), description)
 	}
 	aSlice := []string{}
 	aPointer := &aSlice
@@ -60,6 +76,75 @@ func TestParserIsPredefined(t *testing.T) {
 	assertPredefined(false, aSlice, "slice")
 	assertPredefined(false, aPointer, "pointer")
 	assertPredefined(false, aStruct, "struct")
+}
+
+func TestParserMatchParamType(t *testing.T) {
+	//caller := newFunctionCaller(newParser(newSymbolTable()))
+	factoryType := reflect.TypeOf(FixtureFactory{})
+	factory := reflect.Zero(reflect.PtrTo(factoryType))
+	assert.Equals(t, "*slimprocessor.FixtureFactory", factory.Type().String(), "Factory type OK")
+	method := factory.MethodByName("NewOrder")
+	assert.IsTrue(t, method.IsValid(), "method valid")
+	params := []string{"test", "100"}
+
+	symbols := newSymbolTable()
+	aParser := newParser(symbols)
+
+	_, err := aParser.matchParamType(params, method)
+	assert.Equals(t, "Expected 3 parameter(s) but got 2", err.Error(), "Wrong number of parameters")
+	params = append(params, "25")
+	result, err := aParser.matchParamType(params, method)
+	assert.Equals(t, nil, err, "No error")
+	assert.Equals(t, "string", (*result)[0].Type().String(), "type of param 0 is string")
+	assert.Equals(t, "test", (*result)[0].Interface(), "value of param 0 is test")
+	assert.Equals(t, "float64", (*result)[1].Type().String(), "type of param 1 is float")
+	assert.Equals(t, 100.0, (*result)[1].Interface(), "value of param 1 is 100.0")
+	assert.Equals(t, "int", (*result)[2].Type().String(), "type of param 2 is int")
+	assert.Equals(t, 25, (*result)[2].Interface(), "value of param 2 is 25")
+	params = []string{"test", "100", "q"}
+	_, err = aParser.matchParamType(params, method)
+	assert.Equals(t, "Could not convert 'q' to type 'int'", err.Error(), "invalid conversion")
+}
+
+func TestParserMatchParamTypeVariadic(t *testing.T) {
+	sumFunction := func(num ...int) int {
+		sum := 0
+		for _, value := range num {
+			sum += value
+		}
+		return sum
+	}
+	printFunction := func(template string, args ...interface{}) string {
+		return fmt.Sprintf(template, args...)
+	}
+
+	symbols := newSymbolTable()
+	aParser := newParser(symbols)
+
+	args := []string{"2", "3", "5"}
+	result1, err1 := aParser.matchParamType(args, reflect.ValueOf(sumFunction))
+	assert.Equals(t, nil, err1, "variadic1: No error")
+	assert.Equals(t, 3, len(*result1), "variadic1: 3 params")
+	assert.Equals(t, "int", (*result1)[0].Type().String(), "variadic: type of param is int")
+	assert.Equals(t, 2, (*result1)[0].Interface().(int), "first param value is 2")
+	assert.Equals(t, 3, (*result1)[1].Interface().(int), "second param value is 3")
+	assert.Equals(t, 5, (*result1)[2].Interface().(int), "thirdd param value is 5")
+
+	emptyArgs := []string{}
+	result2, err2 := aParser.matchParamType(emptyArgs, reflect.ValueOf(sumFunction))
+	assert.Equals(t, nil, err2, "variadic2 empty: No error")
+	assert.Equals(t, 0, len(*result2), "variadic2 empty: 0 params")
+
+	args3 := []string{"param %v %v", "3", "5.5"}
+	result3, err3 := aParser.matchParamType(args3, reflect.ValueOf(printFunction))
+	assert.Equals(t, nil, err3, "Variadic3 param interface: No error")
+	assert.Equals(t, 3, len(*result3), "Variadic3 param interface: 3 params")
+	assert.Equals(t, "string", (*result3)[0].Type().String(), "Variadic3 param interface: type of param[0] is string")
+	assert.Equals(t, "int64", (*result3)[1].Type().String(), "Variadic3 param interface: type of param[0] is interface{}")
+	assert.Equals(t, "float64", (*result3)[2].Type().String(), "Variadic3 param interface: type of param[0] is interface{}")
+	assert.Equals(t, "param %v %v", (*result3)[0].Interface().(string), "first param value is ok")
+	assert.Equals(t, int64(3), (*result3)[1].Interface(), "second param value is 3")
+	assert.Equals(t, 5.5, (*result3)[2].Interface(), "third param value is 5.5")
 }
 
 func TestParserToMatchingCloseBracket(t *testing.T) {
@@ -131,12 +216,9 @@ func TestParserParse(t *testing.T) {
 }
 
 func TestParserParseFixture(t *testing.T) {
-	// THis is a bit convoluted because parser needs to know its caller and vice versa
-	// TODO: break this bidirectional relationship
-	caller := injectFunctionCaller(newSymbolTable())
 	aDemoStruct1 := new(demoStruct1)
 	aDemoStruct1.Parse("demo1")
-	aParser := caller.theParser
+	aParser := injectParser()
 	result1, err1 := aParser.parseFixture("new value 1", reflect.TypeOf(aDemoStruct1))
 	assert.Equals(t, nil, err1, "no err1")
 	assert.Equals(t, "new value 1", result1.(*demoStruct1).message, "value set in parse demo1")
@@ -221,7 +303,6 @@ func TestParserParsePredefined(t *testing.T) {
 
 func TestParserParsePtr(t *testing.T) {
 	aParser := newParser(newSymbolTable())
-	aParser.caller = newFunctionCaller(aParser)
 	aDemoStruct1 := new(demoStruct1)
 	result, err := aParser.parsePtr("text2", reflect.TypeOf(aDemoStruct1))
 	assert.Equals(t, nil, err, fmt.Sprintf("%v error", "parsePtr Err"))
@@ -281,4 +362,28 @@ func TestParserParseToInferredType(t *testing.T) {
 	assert.Equals(t, float64(3.14), aParser.parseToInferredType("3.14"), "Float64")
 	assert.Equals(t, false, aParser.parseToInferredType("False"), "Bool")
 	assert.Equals(t, "q", aParser.parseToInferredType("q"), "String")
+}
+
+func TestParserReplaceSymbol(t *testing.T) {
+	aParser := newParser(newSymbolTable())
+	assert.Equals(t, nil, aParser.symbols.SetSymbol("test1", "value1"), "SetSymbol test1 to string")
+	assert.Equals(t, nil, aParser.symbols.SetSymbol("test2", "value2"), "SetSymbol test2 to string")
+	aDemoStruct1 := new(demoStruct1)
+	aDemoStruct1.Parse("hi from aDemoStruct1")
+	assert.Equals(t, nil, aParser.symbols.SetSymbol("test3", aDemoStruct1), "SetSymbol test3 to object")
+	assert.Equals(t, "Invalid symbol name: $_test3", aParser.symbols.SetSymbol("$_test3", "_value3").Error(), "invalid name $_test3")
+
+	assert.Equals(t, "value2", aParser.ReplaceSymbolValue("$test2"), "ReplaceValue($test2) returns value=2")
+	assert.Equals(t, "$_test3", aParser.ReplaceSymbolValue("$_test3"), "ReplaceValue($_test3) returns the input")
+	assert.Equals(t, "value1", aParser.ReplaceSymbolValue("$test1"), "ReplaceValue($test1) returns value1")
+	assert.Equals(t, "hi from aDemoStruct1", aParser.ReplaceSymbolValue("$test3"), "ReplaceValue($test3) returns ToString() value")
+	assert.Equals(t, "$test4", aParser.ReplaceSymbolValue("$test4"), "Nonexisting symbol returns the input")
+	assert.Equals(t, "$", aParser.ReplaceSymbolsIn("$"), "just a $ returns input")
+	assert.Equals(t, "1€$", aParser.ReplaceSymbolsIn("1€$"), "ending with $ returns input")
+
+	assert.Equals(t, "we see value1, value2, 'hi from aDemoStruct1', $test4 and $_test3 returned as-is",
+		aParser.ReplaceSymbolsIn("we see $test1, $test2, '$test3', $test4 and $_test3 returned as-is"), "3 replacements")
+	listIn := slimentity.NewSlimListContaining([]slimentity.SlimEntity{"$$test1", "this is $test2", "$test3", "$test1-$"})
+	listOut := aParser.ReplaceSymbols(listIn).(*slimentity.SlimList)
+	assert.Equals(t, `[$value1, this is value2, hi from aDemoStruct1, value1-$]`, listOut.ToString(), "list values replaced OK")
 }

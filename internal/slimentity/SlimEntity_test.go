@@ -13,6 +13,7 @@ package slimentity
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/essenius/slim4go/internal/assert"
@@ -20,7 +21,9 @@ import (
 
 var slimList SlimList
 
-func Test_SlimListBaseTests(t *testing.T) {
+type emptyStruct struct{}
+
+func TestSlimListBaseTests(t *testing.T) {
 	var list0 *SlimList = nil
 	assert.Equals(t, 0, list0.Length(), "list1 has length 0")
 	list1 := NewSlimList()
@@ -76,4 +79,50 @@ func Test_SlimListBaseTests(t *testing.T) {
 	list6 := NewSlimListContaining([]SlimEntity{"1", "2"})
 	assert.Equals(t, "[1, 2]", list6.ToString(), "NewSlimListContaining created")
 	assert.Equals(t, "[1 2]", fmt.Sprintf("%v", ToSlice(list6)), "to slice")
+}
+
+func TestSlimEntityIsObject(t *testing.T) {
+	assert.IsTrue(t, !IsObject(reflect.ValueOf("")), "empty string is no object")
+	assert.IsTrue(t, IsObject(reflect.ValueOf(t)), "t (pointer to struct T) is an object")
+}
+
+func TestSlimEntityTransformCallResult(t *testing.T) {
+	output := []reflect.Value{}
+	assert.Equals(t, "/__VOID__/", TransformCallResult(output), "empty output")
+	output = append(output, reflect.ValueOf(35))
+	assert.Equals(t, "35", TransformCallResult(output), "1 int output")
+	output = append(output, reflect.ValueOf("test"))
+	outputList := TransformCallResult(output)
+	assert.IsTrue(t, IsSlimList(outputList), "is a SlimList")
+	assert.Equals(t, 2, outputList.(*SlimList).Length(), "list length")
+	assert.Equals(t, "35", outputList.(*SlimList).ElementAt(0), "list entry 0")
+	assert.Equals(t, "test", outputList.(*SlimList).ElementAt(1), "list entry 1")
+}
+
+func TestSlimEntityValueToSlimEntity(t *testing.T) {
+	testSliceList := func(list interface{}) {
+		outList := valueToSlimEntity(reflect.ValueOf(list))
+		assert.IsTrue(t, IsSlimList(outList), "Is SlimList")
+		assert.Equals(t, "[1, a, true]", outList.(*SlimList).ToString(), "slice content OK")
+	}
+
+	assert.Equals(t, "null", valueToSlimEntity(reflect.ValueOf(SlimEntity(nil))), "nil")
+	assert.Equals(t, "1", valueToSlimEntity(reflect.ValueOf(1)), "int")
+	assert.Equals(t, "Test", valueToSlimEntity(reflect.ValueOf("Test")), "string")
+	assert.Equals(t, "1.2", valueToSlimEntity(reflect.ValueOf(1.2)), "float64")
+	assert.Equals(t, "true", valueToSlimEntity(reflect.ValueOf(true)), "bool")
+	assert.Equals(t, "func(*testing.T)", valueToSlimEntity(reflect.ValueOf(TestSlimEntityValueToSlimEntity)), "func")
+
+	aSlice := []interface{}{1, "a", true}
+	aPointer := &aSlice
+	testSliceList(aSlice)
+	testSliceList(aPointer)
+	anEmptyStruct := emptyStruct{}
+	ptrToAnEmptyStruct := &anEmptyStruct
+	assert.Equals(t, anEmptyStruct, valueToSlimEntity(reflect.ValueOf(anEmptyStruct)), "struct")
+	assert.Equals(t, ptrToAnEmptyStruct, valueToSlimEntity(reflect.ValueOf(ptrToAnEmptyStruct)), "pointer to struct")
+	aMap := make(map[string]int)
+	aMap["size"] = 50
+	result := "<table class=\"hash_table\">\n  <tr class=\"hash_row\">\n    <td class=\"hash_key\">size</td>\n    <td class=\"hash_value\">50</td>\n  </tr>\n</table>"
+	assert.Equals(t, result, valueToSlimEntity(reflect.ValueOf(aMap)), "map")
 }

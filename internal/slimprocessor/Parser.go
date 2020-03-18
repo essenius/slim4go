@@ -16,8 +16,12 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/essenius/slim4go/internal/slimentity"
+	"github.com/essenius/slim4go/internal/utilities"
 
 	"golang.org/x/net/html"
 )
@@ -25,11 +29,13 @@ import (
 // Type definitions and constructors
 
 type parser struct {
-	caller  *functionCaller
 	symbols *symbolTable
 }
 
-// we set the caller by property injection (bidirectional relatioship between caller and parser)
+func injectParser() *parser {
+	return newParser(injectSymbolTable())
+}
+
 func newParser(symbols *symbolTable) *parser {
 	aParser := new(parser)
 	aParser.symbols = symbols
@@ -110,9 +116,52 @@ func toMatchingClosingBracket(input string) (string, string, error) {
 
 // Methods
 
+func (aParser *parser) callFunction(function reflect.Value, args []string) (returnEntity slimentity.SlimEntity, err error) {
+	arguments, err := aParser.matchParamType(args, function)
+	if err != nil {
+		return "", err
+	}
+	// The function we call might panic (after all, FitNesse is a testing framework). Be ready for that.
+	defer func() {
+		if panicData := recover(); panicData != nil {
+			returnEntity = nil
+			err = fmt.Errorf("Panic: %v", utilities.ErrorToString(panicData))
+		}
+	}()
+	returnValue := function.Call(*arguments)
+	return slimentity.TransformCallResult(returnValue), nil
+}
+
+func (aParser *parser) matchParamType(paramIn []string, method reflect.Value) (*[]reflect.Value, error) {
+	result := []reflect.Value{}
+	methodType := method.Type()
+	if methodType.Kind() != reflect.Func {
+		return nil, toErrorf("%v is not a function", methodType.String())
+	}
+	numParams := methodType.NumIn()
+	var paramCountMatch bool
+	if methodType.IsVariadic() {
+		paramCountMatch = len(paramIn) >= numParams-1
+	} else {
+		paramCountMatch = len(paramIn) == numParams
+	}
+	if !paramCountMatch {
+		return nil, toErrorf("Expected %v parameter(s) but got %v", numParams, len(paramIn))
+	}
+	for paramIndex, param := range paramIn {
+		paramType := paramTypeFor(methodType, paramIndex)
+		resultValue, err := aParser.parse(param, paramType)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, reflect.ValueOf(resultValue))
+	}
+	return &result, nil
+}
+
 func (aParser *parser) parse(input string, targetType reflect.Type) (interface{}, error) {
 	if isPredefinedType(targetType) {
-		resolvedInput := aParser.symbols.ReplaceSymbolsIn(input)
+		resolvedInput := aParser.ReplaceSymbolsIn(input)
 		return aParser.parsePredefined(resolvedInput, targetType)
 	}
 	if symbolValue, ok := aParser.symbols.NonTextSymbol(input); ok {
@@ -123,14 +172,14 @@ func (aParser *parser) parse(input string, targetType reflect.Type) (interface{}
 	}
 	// target is no predefined type, input is no list, and no Symbol as Object.
 	// Check if it needs to be put in an interface - then we need to infer the type.
-	resolvedInput := aParser.symbols.ReplaceSymbolsIn(input)
+	resolvedInput := aParser.ReplaceSymbolsIn(input)
 	resolvedInputType := reflect.TypeOf(resolvedInput)
 	if resolvedInputType.Kind() == reflect.String && targetType.Kind() == reflect.Interface {
 		return aParser.parseToInferredType(resolvedInput), nil
 	}
 
 	// See if the target is a fixture we can parse into
-	if isObjectType(targetType) {
+	if slimentity.IsObjectType(targetType) {
 		return aParser.parseFixture(resolvedInput, targetType)
 	}
 	switch targetType.Kind() {
@@ -157,19 +206,22 @@ func (aParser *parser) parseFixture(input string, inputType reflect.Type) (inter
 		// The input type is not a pointer, and Parse is a pointer receiver. Get a pointer to the type
 		returnValue = reflect.New(inputType)
 	}
-	parseMethod := returnValue.MethodByName("Parse")
-	if parseMethod.IsValid() {
-		_, err := aParser.caller.call(parseMethod, "Parser", []string{input})
-		if err != nil {
-			return nil, err
-		}
-		if inputType.Kind() == reflect.Ptr {
-			return returnValue.Interface(), nil
-		}
-		// now we have a pointer, but we need the element
-		return returnValue.Elem().Interface(), nil
+	// TODO: consider an object factory
+	anObject := newObject(returnValue, aParser)
+	_, err := anObject.InvokeMember("Parse", slimentity.NewSlimListContaining([]slimentity.SlimEntity{input}))
+	// TODO: move this into a function
+	if _, ok := err.(*notFoundError); ok {
+		return nil, toErrorf("No method Parse found for type '%v'", returnValue.Type())
 	}
-	return nil, toErrorf("No method Parse found for type '%v'", returnValue.Type())
+	if err != nil {
+		return nil, err
+	}
+
+	if inputType.Kind() == reflect.Ptr {
+		return returnValue.Interface(), nil
+	}
+	// now we have a pointer, but we need the element
+	return returnValue.Elem().Interface(), nil
 }
 
 // parseMap converts a hash table (rows of two columns) into a Map of the specified type.
@@ -301,4 +353,33 @@ func (aParser *parser) parseToInferredType(input string) interface{} {
 		return result
 	}
 	return input
+}
+
+func (aParser *parser) ReplaceSymbolsIn(source string) string {
+	regex := regexp.MustCompile(`\$` + symbolPattern)
+	return regex.ReplaceAllStringFunc(source, aParser.ReplaceSymbolValue)
+}
+
+func (aParser *parser) ReplaceSymbols(source interface{}) interface{} {
+	if slimentity.IsSlimList(source) {
+		sourceList := source.(*slimentity.SlimList)
+		result := slimentity.NewSlimList()
+		for _, value := range *sourceList {
+			result.Append(aParser.ReplaceSymbols(value))
+		}
+		return result
+	}
+	return aParser.ReplaceSymbolsIn(source.(string))
+}
+
+func (aParser *parser) ReplaceSymbolValue(symbolName string) string {
+	if symbolValue, ok := aParser.symbols.ValueOf(symbolName); ok {
+		symbolValueValue := reflect.ValueOf(symbolValue)
+		if slimentity.IsObject(symbolValueValue) {
+			anObject := newObject(symbolValueValue, aParser)
+			return anObject.serialize().(string)
+		}
+		return symbolValue.(string)
+	}
+	return symbolName
 }

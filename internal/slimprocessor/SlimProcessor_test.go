@@ -26,10 +26,6 @@ type MockStatementProcessor struct {
 	RegisterFixtureCalls int
 }
 
-func (mock *MockStatementProcessor) actors() *actorStack {
-	return nil
-}
-
 func (mock *MockStatementProcessor) fixtures() *FixtureMap {
 	return nil
 }
@@ -49,20 +45,24 @@ func (mock *MockStatementProcessor) doMake(instanceName, fixtureName string, arg
 	return fmt.Sprintf("Make %v %v(%v)", instanceName, fixtureName, args.ToString())
 }
 
-func (mock *MockStatementProcessor) objects() *objectMap {
+func (mock *MockStatementProcessor) objects() *objectCollection {
 	return nil
+}
+
+func (mock *MockStatementProcessor) objectFactory() *objectFactory {
+	return nil
+}
+
+func (mock *MockStatementProcessor) parser() *parser {
+	return nil
+}
+
+func (mock *MockStatementProcessor) serializeObjectsIn(input slimentity.SlimEntity) slimentity.SlimEntity {
+	return input
 }
 
 func (mock *MockStatementProcessor) setSymbol(symbol string, value interface{}) {
 	mock.SetSymbolCalls++
-}
-
-func (mock *MockStatementProcessor) symbols() *symbolTable {
-	return nil
-}
-
-func (mock *MockStatementProcessor) funcCaller() *functionCaller {
-	return nil
 }
 
 func MakeInstructionList(instruction ...slimentity.SlimEntity) *slimentity.SlimList {

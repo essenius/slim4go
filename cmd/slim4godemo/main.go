@@ -21,6 +21,7 @@ func main() {
 	slim4go.RegisterFixture("Counter", demofixtures.NewCounter)
 	slim4go.RegisterFixture("Dictionary", demofixtures.NewDictionary)
 	slim4go.RegisterFixture("FibonacciFixture", demofixtures.NewFibonacciFixture)
+	slim4go.RegisterFixture("FixtureMapping", demofixtures.NewFixtureMapping)
 	slim4go.RegisterFixture("MemoObject", demofixtures.NewMemoObject)
 	slim4go.RegisterFixture("TableFixture", demofixtures.NewTableFixture)
 	slim4go.RegisterFixture("Temperature", demofixtures.NewTemperature)

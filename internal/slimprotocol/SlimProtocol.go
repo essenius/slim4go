@@ -98,7 +98,6 @@ func OK() string {
 }
 
 // TimedOut returns that a timeout has occurred.
-// TODO: implement timeout
 func TimedOut(timeout time.Duration) string {
 	return Exceptionf("TIMED_OUT %v", int(timeout.Round(time.Second).Seconds()))
 }

@@ -11,7 +11,9 @@
 
 package utilities
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // ErrorToString converts an error response (e.g. from a panic) to a string.
 func ErrorToString(message interface{}) string {

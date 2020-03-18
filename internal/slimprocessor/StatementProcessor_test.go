@@ -12,6 +12,7 @@
 package slimprocessor
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/essenius/slim4go/internal/assert"
@@ -19,6 +20,8 @@ import (
 )
 
 // TODO: complete experiment: create a fixture factory instead of specifying all fixture constructors
+// That would also enable using Import to import all fixture specs in a factory
+
 func NewFixtureFactory() *FixtureFactory {
 	return new(FixtureFactory)
 }
@@ -95,8 +98,14 @@ func TestStatementProcessorMakeMessenger(t *testing.T) {
 	processor.fixtures().RegisterFixture("Messenger", NewMessenger)
 	assert.Equals(t, "OK", processor.doMake("instance1", "Messenger", slimentity.NewSlimList()), "Make")
 	assert.Equals(t, "/__VOID__/", processor.doCall("instance1", "SetMessage",
-		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Hello world"})), "Call Set")
-	assert.Equals(t, "Hello world", processor.doCall("instance1", "Message", slimentity.NewSlimList()), "Call Get")
+		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Hello world"})), "Call Set Message (method)")
+	assert.Equals(t, "Hello world", processor.doCall("instance1", "Message", slimentity.NewSlimList()), "Call Message (method)")
+	assert.Equals(t, "Hello world", processor.doCall("instance1", "GetMessageField", slimentity.NewSlimList()), "Call Get Message Field (field)")
+	assert.Equals(t, "Hello world", processor.doCall("instance1", "MessageField", slimentity.NewSlimList()), "Call Message Field (field)")
+	assert.Equals(t, "/__VOID__/", processor.doCall("instance1", "SetMessageField",
+		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Goodbye"})), "Call Set Message Field (field)")
+	assert.Equals(t, "Goodbye", processor.doCall("instance1", "Message", slimentity.NewSlimList()), "Call Message (method)")
+
 	processor.setSymbol("fixture", "Messenger")
 	assert.Equals(t, "OK", processor.doMake("instance1", "$fixture", slimentity.NewSlimList()), "Remake an existing instance overwrites it without error. It uses a string symbol as fixture name")
 	assert.Equals(t, "", processor.doCall("instance1", "Message", slimentity.NewSlimList()), "Call Get after creating new instance1")
@@ -129,11 +138,7 @@ func TestStatementProcessorMakeOrder(t *testing.T) {
 	assert.Equals(t, "100", processor.doCall("instance1", "Price", slimentity.NewSlimList()), "Call Price")
 	assert.Equals(t, "__EXCEPTION__:message:<<NO_CLASS nonexisting>>", processor.doMake("instance2", "nonexisting", slimentity.NewSlimList()), "Make a nonexisting fixture")
 	assert.Equals(t, "__EXCEPTION__:message:<<NO_INSTANCE nonexisting>>", processor.doCall("nonexisting", "Price", slimentity.NewSlimList()), "Price on nonexisting instance")
-	assert.Equals(t, "__EXCEPTION__:message:<<NO_METHOD_IN_CLASS Nonexisting[0] Order>>", processor.doCall("instance1", "Nonexisting", slimentity.NewSlimList()), "Nonexisting method on existinc instance")
-
-	// can't happen in practice
-	//assert.Equals(t, "Could not parse constructor parameter list from '1'", processor.doMake("instance1", "Order", slimentity.NewSlimListContaining([]slimentity.SlimEntity{TestStatementProcessorMakeOrder})), "Make Order")
-
+	assert.Equals(t, "__EXCEPTION__:message:<<NO_METHOD_IN_CLASS Nonexisting[0] *slimprocessor.Order>>", processor.doCall("instance1", "Nonexisting", slimentity.NewSlimList()), "Nonexisting method on existing instance")
 	assert.Equals(t, "__EXCEPTION__:message:<<COULD_NOT_INVOKE_CONSTRUCTOR Order:Expected_0_parameter(s)_but_got_1>>",
 		processor.doMake("instance3", "Order", slimentity.NewSlimListContaining([]slimentity.SlimEntity{"entry"})), "Use a constructor with wrong number of parameters")
 }
@@ -143,4 +148,27 @@ func TestStatementProcessorMakeObjectWithPanic(t *testing.T) {
 	processor.fixtures().RegisterFixture("Panic", NewObjectWithPanic)
 	assert.Equals(t, "__EXCEPTION__:message:<<COULD_NOT_INVOKE_CONSTRUCTOR Panic:Panic:_Object_creation_failed>>",
 		processor.doMake("instance1", "Panic", slimentity.NewSlimList()), "Make Object With Panic")
+}
+
+func TestStatementProcessorSerializeObjectsIn(t *testing.T) {
+	processor := injectStatementProcessor()
+	test1 := "test1"
+	assert.Equals(t, test1, processor.serializeObjectsIn(test1), "string")
+	assert.IsTrue(t, !slimentity.IsObject(reflect.ValueOf(test1)), "test1 is no object")
+	aDemoStruct1 := &demoStruct1{"demo"}
+	aDemoStruct1.Parse("demo1")
+	assert.IsTrue(t, slimentity.IsObject(reflect.ValueOf(aDemoStruct1)), "aDemoStruct1 is an object")
+	assert.Equals(t, "demo1", processor.serializeObjectsIn(aDemoStruct1), "*struct with *ToString")
+	aDemoStruct2 := demoStruct2{"demo2"}
+	assert.IsTrue(t, slimentity.IsObject(reflect.ValueOf(aDemoStruct2)), "aDemoStruct2 is an object")
+	assert.Equals(t, "demo2", processor.serializeObjectsIn(aDemoStruct2), "struct with ToString")
+	ptrToADemoStruct2 := &aDemoStruct2
+	assert.IsTrue(t, slimentity.IsObject(reflect.ValueOf(ptrToADemoStruct2)), "*aDemoStruct2 is an object")
+	assert.Equals(t, "demo2", processor.serializeObjectsIn(ptrToADemoStruct2), "*struct with ToString")
+	anEmptyStruct := emptyStruct{}
+	assert.Equals(t, "slimprocessor.emptyStruct", processor.serializeObjectsIn(anEmptyStruct), "struct without ToString")
+	list := slimentity.NewSlimListContaining([]slimentity.SlimEntity{"test2", aDemoStruct1, aDemoStruct2, anEmptyStruct})
+	assert.IsTrue(t, !slimentity.IsObject(reflect.ValueOf(list)), "list is no object")
+	assert.Equals(t, "[test2, demo1, demo2, slimprocessor.emptyStruct]",
+		processor.serializeObjectsIn(list).(*slimentity.SlimList).ToString(), "list with objects")
 }

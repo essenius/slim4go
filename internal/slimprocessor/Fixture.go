@@ -11,11 +11,6 @@
 
 package slimprocessor
 
-import (
-	"fmt"
-	"strings"
-)
-
 // Definitions and constructors for Fixture
 
 // fixure is what FitNesse documentation often calls a class. The constructor is a function that creates the object.
@@ -59,75 +54,3 @@ func (fixtures *FixtureMap) RegisterFixture(fixtureName string, constructor inte
 	aFixture := newFixture(fixtureName, constructor)
 	(*fixtures)[fixtureName] = aFixture
 }
-
-// Definitions and constructors for object. An object is an instantiated fixture.
-// It points to an instance which is typically a pointer to a struct.
-
-type object struct {
-	instanceName string
-	instance     interface{}
-	fixtureName  string
-}
-
-type objectMap map[string]*object
-
-func newObject(instanceName string, instance interface{}, fixtureName string) *object {
-	anObject := new(object)
-	anObject.instanceName = instanceName
-	anObject.instance = instance
-	anObject.fixtureName = fixtureName
-	return anObject
-}
-
-func newObjectMap() *objectMap {
-	anObjectMap := make(objectMap)
-	return &anObjectMap
-}
-
-func injectObjects() *objectMap {
-	return newObjectMap()
-}
-
-// Methods for object
-
-func (objects *objectMap) AnyObject() *object {
-	for _, value := range *objects {
-		return value
-	}
-	return nil
-}
-
-func (objects *objectMap) addObject(instanceName string, instance interface{}, fixtureName string) {
-	anObject := newObject(instanceName, instance, fixtureName)
-	(*objects)[instanceName] = anObject
-}
-
-func (objects *objectMap) Length() int {
-	return len(*objects)
-}
-
-func (objects *objectMap) objectNamed(instanceName string) *object {
-	anObject, _ := (*objects)[instanceName]
-	return anObject
-}
-
-func (objects *objectMap) objectsWithPrefix(prefix string) *objectMap {
-	result := newObjectMap()
-	for _, anObject := range *objects {
-		if strings.HasPrefix(anObject.instanceName, prefix) {
-			(*result)[anObject.instanceName] = anObject
-		}
-	}
-	return result
-}
-
-func (objects *objectMap) setObjectInstance(instanceName string, instance interface{}) error {
-	anObject := objects.objectNamed(instanceName)
-	if anObject == nil {
-		return fmt.Errorf("instance not found")
-	}
-	anObject.instance = instance
-	return nil
-}
-
-// TODO: implement graceful naming (Set/Get, capitals, underscores?)

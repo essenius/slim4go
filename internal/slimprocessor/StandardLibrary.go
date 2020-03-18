@@ -25,16 +25,14 @@ const scriptTableActorName = "scriptTableActor"
 // StandardLibrary is the library that gets added to the library list by default.
 type StandardLibrary struct {
 	actors  *actorStack
-	objects *objectMap
-	symbols *symbolTable
+	objects *objectCollection
 }
 
 // NewStandardLibrary instantiates a new StandardLibrary.
-func newStandardLibrary(actors *actorStack, objects *objectMap, symbols *symbolTable) interface{} {
+func newStandardLibrary(actors *actorStack, objects *objectCollection) *StandardLibrary {
 	standardLibrary := new(StandardLibrary)
 	standardLibrary.actors = actors
 	standardLibrary.objects = objects
-	standardLibrary.symbols = symbols
 	return standardLibrary
 }
 
@@ -51,7 +49,6 @@ func (standardLibrary *StandardLibrary) CloneSymbol(input interface{}) interface
 		return targetValue.Interface()
 	}
 	return inputValue.Interface()
-	//	return cloneValue(input)
 }
 
 // Echo returns the input.
@@ -62,7 +59,7 @@ func (standardLibrary *StandardLibrary) Echo(input interface{}) interface{} {
 // GetFixture gets the currently executed fixture.
 func (standardLibrary *StandardLibrary) GetFixture() interface{} {
 	scriptTableActor := standardLibrary.objects.objectNamed(scriptTableActorName)
-	return (*scriptTableActor).instance
+	return (*scriptTableActor).instance()
 }
 
 // PopFixture pops a fixture from the stack.

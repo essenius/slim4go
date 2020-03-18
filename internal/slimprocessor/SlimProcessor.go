@@ -121,7 +121,7 @@ func (slimProcessor *SlimProcessor) doCall(instruction *slimentity.SlimList, min
 	if minLength == assign {
 		slimProcessor.processor.setSymbol(symbolName, result)
 	}
-	return stringifyObjectsIn(result)
+	return slimProcessor.processor.serializeObjectsIn(result)
 }
 
 func (slimProcessor *SlimProcessor) doImport(instruction *slimentity.SlimList) slimentity.SlimEntity {
@@ -152,6 +152,7 @@ func (slimProcessor *SlimProcessor) Process(instructions *slimentity.SlimList) *
 				addResult(results, malformedInstruction(instructionList))
 			} else {
 				id := instructionList.StringAt(0)
+
 				if instructionList.Length() == 1 {
 					addResult(results, id, malformedInstruction(instructionList))
 				} else {

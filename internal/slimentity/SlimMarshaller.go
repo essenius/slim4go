@@ -19,7 +19,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/essenius/slim4go/internal/slimlog"
 	"github.com/essenius/slim4go/internal/utilities"
 )
 
@@ -68,7 +67,6 @@ func (reader *slimReader) readExactBytes(numberOfBytes int) []byte {
 	// we're using bytes on purpose here. The line sizes are in bytes.
 	// Note that this means it isn't necessarily the number of characters - SLIM uses UTF-8 in text.
 
-	slimlog.Trace.Printf("readExactBytes(%v)", numberOfBytes)
 	buffer := make([]byte, numberOfBytes)
 	if _, err := io.ReadAtLeast(reader, buffer, numberOfBytes); err != nil {
 		panic(err.Error())
@@ -128,7 +126,6 @@ func (reader *slimReader) readRequest() (out SlimEntity, err error) {
 		return list, nil
 	}
 	listEntry := reader.readExactBytes(lengthInBytes)
-	slimlog.Trace.Printf("Returning %v", string(listEntry))
 	return string(listEntry), nil
 }
 

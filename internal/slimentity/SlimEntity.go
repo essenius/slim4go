@@ -12,7 +12,10 @@
 package slimentity
 
 import (
+	"fmt"
 	"reflect"
+
+	"github.com/essenius/slim4go/internal/slimprotocol"
 )
 
 // Definitions and constructors
@@ -40,6 +43,24 @@ func NewSlimListContaining(listToAdd []SlimEntity) *SlimList {
 
 // Functions
 
+// TODO: move to object after moving object to SlimEntity
+
+// IsObjectType returns whether the type could be an object.
+func IsObjectType(inputType reflect.Type) bool {
+	inputKind := inputType.Kind()
+	return inputKind == reflect.Struct || (inputKind == reflect.Ptr && IsObjectType(inputType.Elem()))
+}
+
+// IsObject returns whether the element could be an object.
+// It's in slimentity because we don't want a dependency on the slimprocessor package.
+func IsObject(inputValue reflect.Value) bool {
+	return IsObjectType(inputValue.Type())
+}
+
+func isPredefinedType(inputType reflect.Type) bool {
+	return inputType.Name() != "" && inputType.PkgPath() == ""
+}
+
 // IsSlimList checks whether entity is a SlimList.
 func IsSlimList(entity SlimEntity) bool {
 	slimListType := reflect.PtrTo(reflect.TypeOf((*SlimList)(nil)).Elem())
@@ -48,6 +69,7 @@ func IsSlimList(entity SlimEntity) bool {
 
 // ToSlice converts a list to a slice of strings. Only works for simple lists.
 // Nested lists will be serialized with brackets and commas.
+// This allows for slices as parameters in functions (the basis for parse is a string)
 func ToSlice(list *SlimList) []string {
 	result := []string{}
 	for _, entry := range *list {
@@ -140,4 +162,59 @@ func (list *SlimList) ToString() string {
 // TypeOfElementAt returns the type of the element at position index.
 func (list *SlimList) TypeOfElementAt(index int) string {
 	return reflect.TypeOf(list.ElementAt(index)).Name()
+}
+
+// TransformCallResult converts the result of a call to a string representation, or an object pointer.
+func TransformCallResult(callOutput []reflect.Value) SlimEntity {
+	count := len(callOutput)
+	if count == 0 {
+		return slimprotocol.Void()
+	}
+	if count == 1 {
+		return valueToSlimEntity(callOutput[0])
+	}
+	resultList := new(SlimList)
+	for result := 0; result < count; result++ {
+		resultList.Append(valueToSlimEntity(callOutput[result]))
+	}
+	return resultList
+}
+
+func valueToSlimEntity(inputValue reflect.Value) SlimEntity {
+	if !inputValue.IsValid() {
+		return slimprotocol.Null()
+	}
+	// For predefined types, use fmt.Sprintf
+	if isPredefinedType(inputValue.Type()) {
+		return fmt.Sprintf("%v", inputValue.Interface())
+	}
+	if IsObject(inputValue) {
+		return inputValue.Interface()
+	}
+
+	switch inputValue.Kind() {
+	case reflect.Ptr, reflect.Interface:
+		// This is a non-object pointer. Resolve the element
+		return valueToSlimEntity(inputValue.Elem())
+	// Unravel arrays and slices
+	case reflect.Array, reflect.Slice:
+		result := NewSlimList()
+		for i := 0; i < inputValue.Len(); i++ {
+			entry := valueToSlimEntity(inputValue.Index(i))
+			result.Append(entry)
+		}
+		return result
+	// If we can't do anything else, return the type
+	case reflect.Map:
+		tableTemplate := "<table class=\"hash_table\">\n%v</table>"
+		rowTemplate := "  <tr class=\"hash_row\">\n    <td class=\"hash_key\">%v</td>\n    <td class=\"hash_value\">%v</td>\n  </tr>\n"
+		result := ""
+		iterator := inputValue.MapRange()
+		for iterator.Next() {
+			result += fmt.Sprintf(rowTemplate, iterator.Key(), iterator.Value())
+		}
+		return fmt.Sprintf(tableTemplate, result)
+	default:
+		return inputValue.Type().String()
+	}
 }

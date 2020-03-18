@@ -22,32 +22,34 @@ import (
 const instanceName = "scriptTableActor"
 
 func initProcessorAndLibrary(t *testing.T) (*slimStatementProcessor, *StandardLibrary) {
+	// this is normally a single instance but we want to start fresh during testing
+	objectCollectionInstance = nil
 	processor := injectStatementProcessor().(*slimStatementProcessor)
 	processor.fixtures().RegisterFixture("Messenger", NewMessenger)
 	assert.Equals(t, 1, processor.objects().Length(), "Initial Length of stack = 1 (libraryStandard")
-	library := processor.objects().objectNamed("libraryStandard").instance.(*StandardLibrary)
+	library := processor.objects().objectNamed("libraryStandard").instance().(*StandardLibrary)
 	assert.Equals(t, "OK", processor.doMake(instanceName, "Messenger", slimentity.NewSlimList()), "Make Messenger in initProcessorAndLibrary")
 	assert.Equals(t, "/__VOID__/", processor.doCall(instanceName, "SetMessage", slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Hello world"})), "Call Setin initProcessorAndLibrary")
 	return processor, library
 }
 
-func TestSlimLibraryStack(t *testing.T) {
+func TestStandardLibraryStack(t *testing.T) {
 
 	processor, library := initProcessorAndLibrary(t)
 	assert.IsTrue(t, library != nil, "library found")
 	fixture1 := library.GetFixture()
-	processor.symbols().SetSymbol("fixture1", fixture1)
+	processor.setSymbol("fixture1", fixture1)
 	assert.Equals(t, "*slimprocessor.Messenger", reflect.TypeOf(fixture1).String(), "Fixture type Messenger OK")
-	assert.Equals(t, 0, processor.actors().Length(), "Length of stack = 0")
+	assert.Equals(t, 0, library.actors.Length(), "Length of stack = 0")
 	assert.Equals(t, "/__VOID__/", processor.doCall(instanceName, "SetMessage",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Hello world"})), "Call Set before push")
 	library.PushFixture()
-	assert.Equals(t, 1, processor.actors().Length(), "Length of stack = 1 after push")
+	assert.Equals(t, 1, library.actors.Length(), "Length of stack = 1 after push")
 	assert.Equals(t, "/__VOID__/", processor.doCall(instanceName, "SetMessage",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Bye Bye"})), "Call Set after push")
 	assert.Equals(t, "Bye Bye", processor.doCall(instanceName, "Message", slimentity.NewSlimList()), "Call Get before pop")
 	library.PopFixture()
-	assert.Equals(t, 0, processor.actors().Length(), "Length of stack = 0 after pop")
+	assert.Equals(t, 0, library.actors.Length(), "Length of stack = 0 after pop")
 	assert.Equals(t, "Hello world", processor.doCall(instanceName, "Message", slimentity.NewSlimList()), "Call Get after pop")
 	assert.Equals(t, "echo", library.Echo("echo"), "Echo")
 	assert.Equals(t, "OK", processor.doMake(instanceName, "Messenger", slimentity.NewSlimList()), "Make Messenger before making $fixture1")

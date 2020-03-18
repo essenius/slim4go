@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/essenius/slim4go/internal/demofixtures"
+	"github.com/essenius/slim4go/examples/demofixtures"
 
 	"github.com/essenius/slim4go/internal/assert"
 	"github.com/essenius/slim4go/internal/slimcontext"

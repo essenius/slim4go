@@ -12,10 +12,8 @@
 package slim4go
 
 // TODO:
-// * More flexibility in Setter/Getters
-// * Use of public fields
 // * Use of fixture factory to enable import of related fixtures
-// * Break bidirectional relationship in Parser and FunctionCaller
+// * Split up Parser
 
 import (
 	"os"

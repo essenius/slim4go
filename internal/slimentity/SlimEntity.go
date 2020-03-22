@@ -43,18 +43,16 @@ func NewSlimListContaining(listToAdd []SlimEntity) *SlimList {
 
 // Functions
 
-// TODO: move to object after moving object to SlimEntity
+// IsObject returns whether the element could be an object.
+// It's in slimentity because we don't want a dependency on the slimprocessor package.
+func IsObject(inputValue reflect.Value) bool {
+	return IsObjectType(inputValue.Type())
+}
 
 // IsObjectType returns whether the type could be an object.
 func IsObjectType(inputType reflect.Type) bool {
 	inputKind := inputType.Kind()
 	return inputKind == reflect.Struct || (inputKind == reflect.Ptr && IsObjectType(inputType.Elem()))
-}
-
-// IsObject returns whether the element could be an object.
-// It's in slimentity because we don't want a dependency on the slimprocessor package.
-func IsObject(inputValue reflect.Value) bool {
-	return IsObjectType(inputValue.Type())
 }
 
 func isPredefinedType(inputType reflect.Type) bool {
@@ -119,16 +117,6 @@ func (list *SlimList) Length() int {
 	return len(*list)
 }
 
-// Pop removes the first item from the list.
-func (list *SlimList) Pop() interface{} {
-	if len(*list) == 0 {
-		panic("Can't pop from empty list")
-	}
-	returnValue := (*list)[0]
-	*list = (*list)[1:]
-	return returnValue
-}
-
 // StringAt returns the element at the index converted to string.
 func (list *SlimList) StringAt(index int) string {
 	return list.ElementAt(index).(string)
@@ -157,11 +145,6 @@ func (list *SlimList) ToString() string {
 	}
 	result += "]"
 	return result
-}
-
-// TypeOfElementAt returns the type of the element at position index.
-func (list *SlimList) TypeOfElementAt(index int) string {
-	return reflect.TypeOf(list.ElementAt(index)).Name()
 }
 
 // TransformCallResult converts the result of a call to a string representation, or an object pointer.

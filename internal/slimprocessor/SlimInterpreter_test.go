@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/essenius/slim4go/internal/assert"
+	"github.com/essenius/slim4go/internal/fixture"
 	"github.com/essenius/slim4go/internal/slimentity"
 )
 
@@ -26,7 +27,7 @@ type MockStatementProcessor struct {
 	RegisterFixtureCalls int
 }
 
-func (mock *MockStatementProcessor) fixtures() *FixtureMap {
+func (mock *MockStatementProcessor) fixtureRegistry() *fixture.Registry {
 	return nil
 }
 
@@ -72,55 +73,55 @@ func MakeInstructionList(instruction ...slimentity.SlimEntity) *slimentity.SlimL
 	return command
 }
 
-func TestSlimProcessorExecute1(t *testing.T) {
+func TestSlimInterpreterExecute1(t *testing.T) {
 	MockStatementProcessor := new(MockStatementProcessor)
-	slimProcessor := newSlimProcessor(MockStatementProcessor, time.Duration(10)*time.Second)
+	slimInterpreter := newSlimInterpreter(MockStatementProcessor, time.Duration(10)*time.Second)
 	importList := MakeInstructionList("import1", "import", "test")
-	assert.Equals(t, `[[import1, Import test]]`, slimProcessor.Process(importList).ToString(), "Import")
+	assert.Equals(t, `[[import1, Import test]]`, slimInterpreter.Process(importList).ToString(), "Import")
 	makeList := MakeInstructionList("make1", "make", "instance1", "fixture", "arg1", "arg2")
-	assert.Equals(t, `[[make1, Make instance1 fixture([arg1, arg2])]]`, slimProcessor.Process(makeList).ToString(), "Make")
+	assert.Equals(t, `[[make1, Make instance1 fixture([arg1, arg2])]]`, slimInterpreter.Process(makeList).ToString(), "Make")
 	callList := MakeInstructionList("call1", "call", "instance1", "method1", "arg1")
-	assert.Equals(t, `[[call1, Call instance1 method1([arg1])]]`, slimProcessor.Process(callList).ToString(), "Call")
+	assert.Equals(t, `[[call1, Call instance1 method1([arg1])]]`, slimInterpreter.Process(callList).ToString(), "Call")
 	assert.Equals(t, 0, MockStatementProcessor.SetSymbolCalls, "SetSymbol not called")
 	callAndAssignList := MakeInstructionList("callAndAssign1", "callAndAssign", "symbol1", "instance1", "method2")
-	assert.Equals(t, `[[callAndAssign1, Call instance1 method2([])]]`, slimProcessor.Process(callAndAssignList).ToString(), "CallAndAssign")
+	assert.Equals(t, `[[callAndAssign1, Call instance1 method2([])]]`, slimInterpreter.Process(callAndAssignList).ToString(), "CallAndAssign")
 	assert.Equals(t, 1, MockStatementProcessor.SetSymbolCalls, "SetSymbol called once")
 	assignList := MakeInstructionList("assign1", "assign", "symbol2", "value2")
-	assert.Equals(t, `[[assign1, OK]]`, slimProcessor.Process(assignList).ToString(), "Assign")
+	assert.Equals(t, `[[assign1, OK]]`, slimInterpreter.Process(assignList).ToString(), "Assign")
 	assert.Equals(t, 2, MockStatementProcessor.SetSymbolCalls, "SetSymbol called twice")
 }
 
-func TestSlimProcessorTimeout(t *testing.T) {
+func TestSlimInterpreterTimeout(t *testing.T) {
 	MockStatementProcessor := new(MockStatementProcessor)
-	slimProcessor := newSlimProcessor(MockStatementProcessor, time.Duration(1)*time.Nanosecond)
+	slimInterpreter := newSlimInterpreter(MockStatementProcessor, time.Duration(1)*time.Nanosecond)
 	importList := MakeInstructionList("import1", "import", "wait")
-	assert.Equals(t, `[[import1, __EXCEPTION__:message:<<TIMED_OUT 0>>]]`, slimProcessor.Process(importList).ToString(), "Import with timeout")
+	assert.Equals(t, `[[import1, __EXCEPTION__:message:<<TIMED_OUT 0>>]]`, slimInterpreter.Process(importList).ToString(), "Import with timeout")
 }
 
-func TestSlimProcessorMalformedInstructions(t *testing.T) {
+func TestSlimInterpreterMalformedInstructions(t *testing.T) {
 	MockStatementProcessor := new(MockStatementProcessor)
-	slimProcessor := newSlimProcessor(MockStatementProcessor, time.Duration(7)*time.Second)
+	slimInterpreter := newSlimInterpreter(MockStatementProcessor, time.Duration(7)*time.Second)
 	importList := MakeInstructionList("import1", "import")
-	assert.Equals(t, `[[import1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [import1, import]>>]]`, slimProcessor.Process(importList).ToString(), "Import invalid")
+	assert.Equals(t, `[[import1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [import1, import]>>]]`, slimInterpreter.Process(importList).ToString(), "Import invalid")
 	makeList := MakeInstructionList("make1", "make", "instance1")
-	assert.Equals(t, `[[make1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [make1, make, instance1]>>]]`, slimProcessor.Process(makeList).ToString(), "Make invalid")
+	assert.Equals(t, `[[make1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [make1, make, instance1]>>]]`, slimInterpreter.Process(makeList).ToString(), "Make invalid")
 	callList := MakeInstructionList("call1", "call", "instance1")
-	assert.Equals(t, `[[call1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [call1, call, instance1]>>]]`, slimProcessor.Process(callList).ToString(), "Call invalid")
+	assert.Equals(t, `[[call1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [call1, call, instance1]>>]]`, slimInterpreter.Process(callList).ToString(), "Call invalid")
 	callAndAssignList := MakeInstructionList("callAndAssign1", "callAndAssign", "symbol1", "instance1")
-	assert.Equals(t, `[[callAndAssign1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [callAndAssign1, callAndAssign, symbol1, instance1]>>]]`, slimProcessor.Process(callAndAssignList).ToString(), "CallAndAssign invalid")
+	assert.Equals(t, `[[callAndAssign1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [callAndAssign1, callAndAssign, symbol1, instance1]>>]]`, slimInterpreter.Process(callAndAssignList).ToString(), "CallAndAssign invalid")
 	assignList := MakeInstructionList("assign1", "assign")
-	assert.Equals(t, `[[assign1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [assign1, assign]>>]]`, slimProcessor.Process(assignList).ToString(), "Assign invalid")
+	assert.Equals(t, `[[assign1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [assign1, assign]>>]]`, slimInterpreter.Process(assignList).ToString(), "Assign invalid")
 	nullList := MakeInstructionList()
-	assert.Equals(t, `[[__EXCEPTION__:message:<<MALFORMED_INSTRUCTION []>>]]`, slimProcessor.Process(nullList).ToString(), "Null")
+	assert.Equals(t, `[[__EXCEPTION__:message:<<MALFORMED_INSTRUCTION []>>]]`, slimInterpreter.Process(nullList).ToString(), "Null")
 	unknownCommandList := MakeInstructionList("unknown1", "unknown")
-	assert.Equals(t, `[[unknown1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [unknown1, unknown]>>]]`, slimProcessor.Process(unknownCommandList).ToString(), "unknown Command")
+	assert.Equals(t, `[[unknown1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [unknown1, unknown]>>]]`, slimInterpreter.Process(unknownCommandList).ToString(), "unknown Command")
 	noCommandList := MakeInstructionList("bogus")
-	assert.Equals(t, `[[bogus, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [bogus]>>]]`, slimProcessor.Process(noCommandList).ToString(), "no command")
+	assert.Equals(t, `[[bogus, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [bogus]>>]]`, slimInterpreter.Process(noCommandList).ToString(), "no command")
 }
 
-func TestSlimProcessorInjector(t *testing.T) {
-	slimProcessor := InjectSlimProcessor()
-	processorType := reflect.TypeOf(slimProcessor.processor)
+func TestSlimInterpreterInjector(t *testing.T) {
+	slimInterpreter := InjectSlimInterpreter()
+	processorType := reflect.TypeOf(slimInterpreter.processor)
 	assert.Equals(t, "*slimprocessor.slimStatementProcessor", processorType.String(), "StatementProcessor has the right type")
-	assert.Equals(t, time.Duration(0), slimProcessor.timeout, "Default timeout 0 (not initialized yet)")
+	assert.Equals(t, time.Duration(0), slimInterpreter.timeout, "Default timeout 0 (not initialized yet)")
 }

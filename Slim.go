@@ -12,8 +12,8 @@
 package slim4go
 
 // TODO:
-// * Use of fixture factory to enable import of related fixtures
 // * Split up Parser
+// * Use more packages, see fixture
 
 import (
 	"os"
@@ -38,7 +38,12 @@ func Serve() {
 	}
 }
 
-// RegisterFixture registers a type as fixture using a constructor.
-func RegisterFixture(fixtureName string, constructor interface{}) {
-	Server().RegisterFixture(fixtureName, constructor)
+// RegisterFixture registers a type as fixture using a constructor func.
+func RegisterFixture(constructor interface{}) error {
+	return Server().RegisterFixture(constructor)
+}
+
+// RegisterFixturesFrom registers a number of fixtures using a factory (having pointer receivers named NewXxx).
+func RegisterFixturesFrom(factory interface{}) error {
+	return Server().RegisterFixturesFrom(factory)
 }

@@ -9,7 +9,6 @@
 //   is distributed on an "AS IS" BASIS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and limitations under the License.
 
-
 // TODO: this file is pretty large. See if we can split it up logically
 
 package slimprocessor
@@ -49,6 +48,12 @@ func (demo2 *demoStruct2) Parse(input string) {
 
 type emptyStruct struct{}
 
+func NewObjectWithPanic() int {
+	panic("Object creation failed")
+}
+
+func NewOrderWithParams(productID string, unitPrice float64, units int) {}
+
 func TestParserCallFunction(t *testing.T) {
 	parser := injectParser()
 	result1, err1 := parser.callFunction(reflect.ValueOf(NewObjectWithPanic), []string{})
@@ -79,17 +84,11 @@ func TestParserIsPredefined(t *testing.T) {
 }
 
 func TestParserMatchParamType(t *testing.T) {
-	//caller := newFunctionCaller(newParser(newSymbolTable()))
-	factoryType := reflect.TypeOf(FixtureFactory{})
-	factory := reflect.Zero(reflect.PtrTo(factoryType))
-	assert.Equals(t, "*slimprocessor.FixtureFactory", factory.Type().String(), "Factory type OK")
-	method := factory.MethodByName("NewOrder")
+	method := reflect.ValueOf(NewOrderWithParams)
 	assert.IsTrue(t, method.IsValid(), "method valid")
 	params := []string{"test", "100"}
-
 	symbols := newSymbolTable()
 	aParser := newParser(symbols)
-
 	_, err := aParser.matchParamType(params, method)
 	assert.Equals(t, "Expected 3 parameter(s) but got 2", err.Error(), "Wrong number of parameters")
 	params = append(params, "25")

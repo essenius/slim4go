@@ -119,7 +119,6 @@ func (anObject *object) setField(field reflect.Value, value slimentity.SlimEntit
 }
 
 func (anObject *object) tryField(fieldNames []string, args *slimentity.SlimList) (slimentity.SlimEntity, error) {
-	// TODO make this work for slices etc. Also, eliminate the newObject
 	if anObject.instanceValue.Kind() == reflect.Ptr {
 		elemObject := newObject(anObject.instanceValue.Elem(), anObject.theParser)
 		return elemObject.tryField(fieldNames, args)

@@ -16,6 +16,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/essenius/slim4go/internal/fixture"
 	"github.com/essenius/slim4go/internal/slimentity"
 	"github.com/essenius/slim4go/internal/slimprotocol"
 )
@@ -32,7 +33,7 @@ func (aNotFoundError *notFoundError) Error() string {
 }
 
 type statementProcessor interface {
-	fixtures() *FixtureMap
+	fixtureRegistry() *fixture.Registry
 	doCall(instanceName, methodName string, args *slimentity.SlimList) slimentity.SlimEntity
 	doImport(value string) slimentity.SlimEntity
 	doMake(instanceName, fixtureName string, args *slimentity.SlimList) slimentity.SlimEntity
@@ -43,20 +44,20 @@ type statementProcessor interface {
 }
 
 type slimStatementProcessor struct {
-	theFixtures *FixtureMap
+	theRegistry *fixture.Registry
 	theObjects  *objectCollection
 	theParser   *parser
 }
 
 func injectStatementProcessor() statementProcessor {
 	parser := injectParser()
-	processor := newStatementProcessor(InjectFixtures(), injectObjectCollection(parser), parser)
+	processor := newStatementProcessor(fixture.InjectRegistry(), injectObjectCollection(parser), parser)
 	return processor
 }
 
-func newStatementProcessor(fixtures *FixtureMap, objects *objectCollection, aParser *parser) statementProcessor {
+func newStatementProcessor(registry *fixture.Registry, objects *objectCollection, aParser *parser) statementProcessor {
 	processor := new(slimStatementProcessor)
-	processor.theFixtures = fixtures
+	processor.theRegistry = registry
 	processor.theObjects = objects
 	processor.theParser = aParser
 	return processor
@@ -64,8 +65,8 @@ func newStatementProcessor(fixtures *FixtureMap, objects *objectCollection, aPar
 
 // Methods. First the different tables
 
-func (processor *slimStatementProcessor) fixtures() *FixtureMap {
-	return processor.theFixtures
+func (processor *slimStatementProcessor) fixtureRegistry() *fixture.Registry {
+	return processor.theRegistry
 }
 
 func (processor *slimStatementProcessor) objects() *objectCollection {
@@ -118,6 +119,7 @@ func (processor *slimStatementProcessor) doCall(instanceName, methodName string,
 }
 
 func (processor *slimStatementProcessor) doImport(value string) slimentity.SlimEntity {
+	processor.fixtureRegistry().AddNamespace(value)
 	return slimprotocol.OK()
 }
 
@@ -127,12 +129,12 @@ func (processor *slimStatementProcessor) doMake(instanceName, fixtureName string
 		return slimprotocol.OK()
 	}
 	resolvedFixtureName := processor.parser().ReplaceSymbolsIn(fixtureName)
-	aFixture := processor.fixtures().fixtureNamed(resolvedFixtureName)
-	if aFixture == nil {
+	constructor := processor.fixtureRegistry().FixtureNamed(resolvedFixtureName)
+	if constructor == nil {
 		return slimprotocol.NoFixture(resolvedFixtureName)
 	}
-	constructor := reflect.ValueOf(aFixture.constructor)
-	if err := processor.objects().addObjectByConstructor(instanceName, constructor, slimentity.ToSlice(args)); err != nil {
+	constructorValue := reflect.ValueOf(constructor)
+	if err := processor.objects().addObjectByConstructor(instanceName, constructorValue, slimentity.ToSlice(args)); err != nil {
 		return slimprotocol.CouldNotInvokeConstructor(strings.ReplaceAll(fixtureName+":"+err.Error(), " ", "_"))
 	}
 	return slimprotocol.OK()

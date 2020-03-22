@@ -19,6 +19,25 @@ import (
 	"github.com/essenius/slim4go/internal/slimentity"
 )
 
+type Order struct {
+	ProductID string
+	Units     int
+	UnitPrice float64
+}
+
+func NewOrder() *Order {
+	return new(Order)
+}
+
+func (order *Order) Price() float64 {
+	return order.UnitPrice * float64(order.Units)
+}
+
+func (order *Order) SetProduct(productID string, unitPrice float64) {
+	order.ProductID = productID
+	order.UnitPrice = unitPrice
+}
+
 func TestObjectWithPrefix(t *testing.T) {
 	objects := injectObjectCollection(injectParser())
 	// clean out object map -- objectcollection is a single instance

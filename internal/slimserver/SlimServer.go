@@ -14,6 +14,7 @@ package slimserver
 import (
 	"fmt"
 
+	"github.com/essenius/slim4go/internal/fixture"
 	"github.com/essenius/slim4go/internal/slimentity"
 	"github.com/essenius/slim4go/internal/slimlog"
 	"github.com/essenius/slim4go/internal/slimprocessor"
@@ -22,9 +23,9 @@ import (
 
 // SlimServer is the main object.
 type SlimServer struct {
-	fixtures  *slimprocessor.FixtureMap
-	messenger slimMessenger
-	processor *slimprocessor.SlimProcessor
+	fixtureRegistry *fixture.Registry
+	messenger       slimMessenger
+	processor       *slimprocessor.SlimInterpreter
 }
 
 var slimServerInstance *SlimServer
@@ -32,14 +33,14 @@ var slimServerInstance *SlimServer
 // InjectSlimServer provides a Slim server instance.
 func InjectSlimServer() *SlimServer {
 	if slimServerInstance == nil {
-		slimServerInstance = newSlimServer(slimprocessor.InjectFixtures(), injectMessenger(), slimprocessor.InjectSlimProcessor())
+		slimServerInstance = newSlimServer(fixture.InjectRegistry(), injectMessenger(), slimprocessor.InjectSlimInterpreter())
 	}
 	return slimServerInstance
 }
 
-func newSlimServer(fixtures *slimprocessor.FixtureMap, messenger slimMessenger, processor *slimprocessor.SlimProcessor) *SlimServer {
+func newSlimServer(fixtureRegistry *fixture.Registry, messenger slimMessenger, processor *slimprocessor.SlimInterpreter) *SlimServer {
 	server := new(SlimServer)
-	server.fixtures = fixtures
+	server.fixtureRegistry = fixtureRegistry
 	server.messenger = messenger
 	server.processor = processor
 	return server
@@ -77,6 +78,11 @@ func (server *SlimServer) Serve() error {
 }
 
 // RegisterFixture registers a type as fixture using a constructor.
-func (server *SlimServer) RegisterFixture(fixtureName string, constructor interface{}) {
-	server.fixtures.RegisterFixture(fixtureName, constructor)
+func (server *SlimServer) RegisterFixture(constructor interface{}) error {
+	return server.fixtureRegistry.AddFixture(constructor)
+}
+
+// RegisterFixturesFrom registers a number of fixtures using a fixture factory (having NewXxx pointer receivers).
+func (server *SlimServer) RegisterFixturesFrom(factory interface{}) error {
+	return server.fixtureRegistry.AddFixturesFrom(factory)
 }

@@ -18,12 +18,12 @@ import (
 	"time"
 )
 
-//AbortSuite returns the instruction to abort executing the suite.
+// AbortSuite returns the instruction to abort executing the suite.
 func AbortSuite(reason string) string {
 	return "__EXCEPTION__:ABORT_SLIM_SUITE:message:<<" + reason + ">>"
 }
 
-//AbortTest returns the instruction to abort executing the suite.
+// AbortTest returns the instruction to abort executing the suite.
 func AbortTest(reason string) string {
 	return "__EXCEPTION__:ABORT_SLIM_TEST:message:<<" + reason + ">>"
 }
@@ -107,7 +107,7 @@ func Version() string {
 	return "Slim -- V0.5\n"
 }
 
-//Void returns that a call resulted in a void response.
+// Void returns that a call resulted in a void response.
 func Void() string {
 	return "/__VOID__/"
 }

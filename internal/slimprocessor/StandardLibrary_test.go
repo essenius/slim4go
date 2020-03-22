@@ -19,16 +19,33 @@ import (
 	"github.com/essenius/slim4go/internal/slimentity"
 )
 
+type Messenger struct {
+	MessageField string
+}
+
+func NewMessenger() *Messenger {
+	return new(Messenger)
+}
+
+func (messenger *Messenger) SetMessage(message string) {
+	messenger.MessageField = message
+}
+
+func (messenger *Messenger) Message() string {
+	return messenger.MessageField
+}
+
 const instanceName = "scriptTableActor"
 
 func initProcessorAndLibrary(t *testing.T) (*slimStatementProcessor, *StandardLibrary) {
 	// this is normally a single instance but we want to start fresh during testing
 	objectCollectionInstance = nil
 	processor := injectStatementProcessor().(*slimStatementProcessor)
-	processor.fixtures().RegisterFixture("Messenger", NewMessenger)
+	processor.fixtureRegistry().AddFixture(NewMessenger)
+	processor.fixtureRegistry().AddNamespace("slimprocessor")
 	assert.Equals(t, 1, processor.objects().Length(), "Initial Length of stack = 1 (libraryStandard")
 	library := processor.objects().objectNamed("libraryStandard").instance().(*StandardLibrary)
-	assert.Equals(t, "OK", processor.doMake(instanceName, "Messenger", slimentity.NewSlimList()), "Make Messenger in initProcessorAndLibrary")
+	assert.Equals(t, "OK", processor.doMake(instanceName, "slimprocessor.Messenger", slimentity.NewSlimList()), "Make Messenger in initProcessorAndLibrary")
 	assert.Equals(t, "/__VOID__/", processor.doCall(instanceName, "SetMessage", slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Hello world"})), "Call Setin initProcessorAndLibrary")
 	return processor, library
 }

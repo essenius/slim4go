@@ -209,7 +209,6 @@ func (aParser *parser) parseFixture(input string, inputType reflect.Type) (inter
 	// TODO: consider an object factory
 	anObject := newObject(returnValue, aParser)
 	_, err := anObject.InvokeMember("Parse", slimentity.NewSlimListContaining([]slimentity.SlimEntity{input}))
-	// TODO: move this into a function
 	if _, ok := err.(*notFoundError); ok {
 		return nil, toErrorf("No method Parse found for type '%v'", returnValue.Type())
 	}

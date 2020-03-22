@@ -42,7 +42,7 @@ func (fixture *FibonacciFixture) Execute() {
 	fixture.result, fixture.err = demosut.Fibonacci(fixture.InputValue)
 }
 
-//Fibonacci runs the fibonacci function from the system under test.
+// Fibonacci runs the fibonacci function from the system under test.
 func (fixture *FibonacciFixture) Fibonacci() string {
 	if fixture.err != nil {
 		return fixture.err.Error()

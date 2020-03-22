@@ -21,22 +21,22 @@ import (
 
 // Definitions and constructors
 
-// SlimProcessor processes incomming SlimLists and dispatches commands to its statement processor.
-type SlimProcessor struct {
+// SlimInterpreter processes incomming SlimLists and dispatches commands to its statement processor.
+type SlimInterpreter struct {
 	processor statementProcessor
 	timeout   time.Duration
 }
 
-// InjectSlimProcessor is the IoC entry point to provide a SlimProcessor.
-func InjectSlimProcessor() *SlimProcessor {
-	return newSlimProcessor(injectStatementProcessor(), slimcontext.InjectContext().InstructionTimeout)
+// InjectSlimInterpreter is the IoC entry point to provide a SlimInterpreter.
+func InjectSlimInterpreter() *SlimInterpreter {
+	return newSlimInterpreter(injectStatementProcessor(), slimcontext.InjectContext().InstructionTimeout)
 }
 
-func newSlimProcessor(processor statementProcessor, timeout time.Duration) *SlimProcessor {
-	slimProcessor := new(SlimProcessor)
-	slimProcessor.processor = processor
-	slimProcessor.timeout = timeout
-	return slimProcessor
+func newSlimInterpreter(processor statementProcessor, timeout time.Duration) *SlimInterpreter {
+	slimInterpreter := new(SlimInterpreter)
+	slimInterpreter.processor = processor
+	slimInterpreter.timeout = timeout
+	return slimInterpreter
 }
 
 // Helper methods
@@ -55,29 +55,29 @@ func malformedInstruction(instruction interface{}) string {
 
 // Methods
 
-func (slimProcessor *SlimProcessor) dispatch(instruction *slimentity.SlimList) slimentity.SlimEntity {
+func (slimInterpreter *SlimInterpreter) dispatch(instruction *slimentity.SlimList) slimentity.SlimEntity {
 	command := instruction.StringAt(1)
 	switch command {
 	case "assign":
-		return slimProcessor.doAssign(instruction)
+		return slimInterpreter.doAssign(instruction)
 	case "call":
-		return slimProcessor.doCall(instruction, noAssign)
+		return slimInterpreter.doCall(instruction, noAssign)
 	case "callAndAssign":
-		return slimProcessor.doCall(instruction, assign)
+		return slimInterpreter.doCall(instruction, assign)
 	case "import":
-		return slimProcessor.doImport(instruction)
+		return slimInterpreter.doImport(instruction)
 	case "make":
-		return slimProcessor.doMake(instruction)
+		return slimInterpreter.doMake(instruction)
 	default:
 		return malformedInstruction(instruction)
 	}
 }
 
-func (slimProcessor *SlimProcessor) dispatchWithTimeout(instruction *slimentity.SlimList) slimentity.SlimEntity {
+func (slimInterpreter *SlimInterpreter) dispatchWithTimeout(instruction *slimentity.SlimList) slimentity.SlimEntity {
 	resultChannel := make(chan slimentity.SlimEntity, 1)
-	instructionTimer := time.NewTimer(slimProcessor.timeout)
+	instructionTimer := time.NewTimer(slimInterpreter.timeout)
 	go func() {
-		returnValue := slimProcessor.dispatch(instruction)
+		returnValue := slimInterpreter.dispatch(instruction)
 		resultChannel <- returnValue
 	}()
 	select {
@@ -85,17 +85,17 @@ func (slimProcessor *SlimProcessor) dispatchWithTimeout(instruction *slimentity.
 		instructionTimer.Stop()
 		return result
 	case <-instructionTimer.C:
-		return slimprotocol.TimedOut(slimProcessor.timeout)
+		return slimprotocol.TimedOut(slimInterpreter.timeout)
 	}
 }
 
-func (slimProcessor *SlimProcessor) doAssign(instruction *slimentity.SlimList) string {
+func (slimInterpreter *SlimInterpreter) doAssign(instruction *slimentity.SlimList) string {
 	if instruction.Length() < 3 {
 		return malformedInstruction(instruction)
 	}
 	symbolName := instruction.StringAt(2)
 	value := instruction.StringAt(3)
-	slimProcessor.processor.setSymbol(symbolName, value)
+	slimInterpreter.processor.setSymbol(symbolName, value)
 	return slimprotocol.OK()
 }
 
@@ -104,7 +104,7 @@ const (
 	assign   = 5
 )
 
-func (slimProcessor *SlimProcessor) doCall(instruction *slimentity.SlimList, minLength int) slimentity.SlimEntity {
+func (slimInterpreter *SlimInterpreter) doCall(instruction *slimentity.SlimList, minLength int) slimentity.SlimEntity {
 	if instruction.Length() < minLength {
 		return malformedInstruction(instruction)
 	}
@@ -117,33 +117,33 @@ func (slimProcessor *SlimProcessor) doCall(instruction *slimentity.SlimList, min
 	instanceName := instruction.StringAt(startIndex)
 	methodName := instruction.StringAt(startIndex + 1)
 	args := instruction.TailAt(startIndex + 2)
-	result := slimProcessor.processor.doCall(instanceName, methodName, args)
+	result := slimInterpreter.processor.doCall(instanceName, methodName, args)
 	if minLength == assign {
-		slimProcessor.processor.setSymbol(symbolName, result)
+		slimInterpreter.processor.setSymbol(symbolName, result)
 	}
-	return slimProcessor.processor.serializeObjectsIn(result)
+	return slimInterpreter.processor.serializeObjectsIn(result)
 }
 
-func (slimProcessor *SlimProcessor) doImport(instruction *slimentity.SlimList) slimentity.SlimEntity {
+func (slimInterpreter *SlimInterpreter) doImport(instruction *slimentity.SlimList) slimentity.SlimEntity {
 	if instruction.Length() < 3 {
 		return malformedInstruction(instruction)
 	}
 	pathName := instruction.StringAt(2)
-	return slimProcessor.processor.doImport(pathName)
+	return slimInterpreter.processor.doImport(pathName)
 }
 
-func (slimProcessor *SlimProcessor) doMake(instruction *slimentity.SlimList) slimentity.SlimEntity {
+func (slimInterpreter *SlimInterpreter) doMake(instruction *slimentity.SlimList) slimentity.SlimEntity {
 	if instruction.Length() < 4 {
 		return malformedInstruction(instruction)
 	}
 	instanceName := instruction.StringAt(2)
 	fixtureName := instruction.StringAt(3)
 	args := instruction.TailAt(4)
-	return slimProcessor.processor.doMake(instanceName, fixtureName, args)
+	return slimInterpreter.processor.doMake(instanceName, fixtureName, args)
 }
 
 // Process takes an incoming set of instructions, dispatches to statement processor, and retrieves the result.
-func (slimProcessor *SlimProcessor) Process(instructions *slimentity.SlimList) *slimentity.SlimList {
+func (slimInterpreter *SlimInterpreter) Process(instructions *slimentity.SlimList) *slimentity.SlimList {
 	results := slimentity.NewSlimList()
 	for _, instruction := range *instructions {
 		if slimentity.IsSlimList(instruction) {
@@ -156,7 +156,7 @@ func (slimProcessor *SlimProcessor) Process(instructions *slimentity.SlimList) *
 				if instructionList.Length() == 1 {
 					addResult(results, id, malformedInstruction(instructionList))
 				} else {
-					result := slimProcessor.dispatchWithTimeout(instructionList)
+					result := slimInterpreter.dispatchWithTimeout(instructionList)
 					addResult(results, id, result)
 				}
 			}

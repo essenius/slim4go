@@ -16,17 +16,20 @@ import (
 	"github.com/essenius/slim4go/examples/demofixtures"
 )
 
+type demoFactory struct{}
+
 func main() {
-	slim4go.RegisterFixture("Array", demofixtures.NewArray)
-	slim4go.RegisterFixture("Counter", demofixtures.NewCounter)
-	slim4go.RegisterFixture("Dictionary", demofixtures.NewDictionary)
-	slim4go.RegisterFixture("FibonacciFixture", demofixtures.NewFibonacciFixture)
-	slim4go.RegisterFixture("FixtureMapping", demofixtures.NewFixtureMapping)
-	slim4go.RegisterFixture("MemoObject", demofixtures.NewMemoObject)
-	slim4go.RegisterFixture("TableFixture", demofixtures.NewTableFixture)
-	slim4go.RegisterFixture("Temperature", demofixtures.NewTemperature)
-	slim4go.RegisterFixture("TemperatureConverter", demofixtures.NewTemperatureConverter)
-	slim4go.RegisterFixture("TestQuery", demofixtures.NewTestQuery)
-	slim4go.RegisterFixture("Waiter", demofixtures.NewWaiter)
+	slim4go.RegisterFixturesFrom(demofixtures.NewTemperatureFactory())
+	slim4go.RegisterFixture(demofixtures.NewArray)
+	slim4go.RegisterFixture(demofixtures.NewCounter)
+	slim4go.RegisterFixture(demofixtures.NewDictionary)
+	slim4go.RegisterFixture(demofixtures.NewFibonacciFixture)
+	slim4go.RegisterFixture(demofixtures.NewFixtureMapping)
+	slim4go.RegisterFixture(demofixtures.NewMemoObject)
+	slim4go.RegisterFixture(demofixtures.NewTableFixture)
+	//slim4go.RegisterFixture(demofixtures.NewTemperature)
+	//slim4go.RegisterFixture(demofixtures.NewTemperatureConverter)
+	slim4go.RegisterFixture(demofixtures.NewTestQuery)
+	slim4go.RegisterFixture(demofixtures.NewWaiter)
 	slim4go.Serve()
 }

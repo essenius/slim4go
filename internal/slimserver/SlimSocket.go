@@ -82,8 +82,6 @@ func (socket *slimSocket) Read(buffer []byte) (int, error) {
 
 // SendMessage writes a message to the socket connection.
 func (socket *slimSocket) SendMessage(message string) error {
-	//slimlog.Trace.Printf("socket port: %v", socket.port)
-	//slimlog.Trace.Printf("socket connection local address: %v", socket.connection.LocalAddr())
 	socket.connection.SetWriteDeadline(time.Now().Add(socket.timeout))
 	_, err := socket.connection.Write([]byte(message))
 	return err

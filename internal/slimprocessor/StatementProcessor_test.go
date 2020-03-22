@@ -19,74 +19,8 @@ import (
 	"github.com/essenius/slim4go/internal/slimentity"
 )
 
-// TODO: complete experiment: create a fixture factory instead of specifying all fixture constructors
-// That would also enable using Import to import all fixture specs in a factory
-
-func NewFixtureFactory() *FixtureFactory {
-	return new(FixtureFactory)
-}
-
-type FixtureFactory struct{}
-
-func (factory *FixtureFactory) NewOrder(productID string, unitPrice float64, units int) *Order {
-	order := new(Order)
-	order.ProductID = productID
-	order.UnitPrice = unitPrice
-	order.Units = units
-	return order
-}
-
-func (factory *FixtureFactory) NewMessenger() interface{} {
-	return new(Messenger)
-}
-
-// end experiment
-
-type Order struct {
-	ProductID string
-	Units     int
-	UnitPrice float64
-}
-
-func NewOrder() *Order {
-	return new(Order)
-}
-
-func (order *Order) Price() float64 {
-	return order.UnitPrice * float64(order.Units)
-}
-
-func (order *Order) SetUnits(units int) {
-	order.Units = units
-}
-
-func (order *Order) SetProduct(productID string, unitPrice float64) {
-	order.ProductID = productID
-	order.UnitPrice = unitPrice
-}
-
-type Messenger struct {
-	MessageField string
-}
-
-func NewMessenger() *Messenger {
-	return new(Messenger)
-}
-
-func (messenger *Messenger) SetMessage(message string) {
-	messenger.MessageField = message
-}
-
-func (messenger *Messenger) Message() string {
-	return messenger.MessageField
-}
-
 func (messenger *Messenger) Panic() {
 	panic(messenger.Message())
-}
-
-func NewObjectWithPanic() interface{} {
-	panic("Object creation failed")
 }
 
 func TestStatementProcessorMakeMessenger(t *testing.T) {
@@ -95,7 +29,8 @@ func TestStatementProcessorMakeMessenger(t *testing.T) {
 	assert.Equals(t, "TestResponse", processor.doCall("instance1", "CloneSymbol",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"$test1"})), "Call cloneSymbol without creating an instance first")
 
-	processor.fixtures().RegisterFixture("Messenger", NewMessenger)
+	processor.fixtureRegistry().AddFixture(NewMessenger)
+	processor.doImport("slimprocessor")
 	assert.Equals(t, "OK", processor.doMake("instance1", "Messenger", slimentity.NewSlimList()), "Make")
 	assert.Equals(t, "/__VOID__/", processor.doCall("instance1", "SetMessage",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Hello world"})), "Call Set Message (method)")
@@ -119,17 +54,18 @@ func TestStatementProcessorMakeMessenger(t *testing.T) {
 	assert.Equals(t, "SetMessage", processor.doCall("instance1", "CloneSymbol",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"$method"})), "Call cloneSymbol on instance1")
 
-	processor.fixtures().RegisterFixture("Bogus", 1)
+	//processor.fixtureRegistry().AddFixture(1)
 
-	assert.Equals(t, "__EXCEPTION__:message:<<COULD_NOT_INVOKE_CONSTRUCTOR Bogus:int_is_not_a_function>>",
-		processor.doMake("wronginstance", "Bogus", slimentity.NewSlimList()), "Bogus constructor")
+	//assert.Equals(t, "__EXCEPTION__:message:<<COULD_NOT_INVOKE_CONSTRUCTOR Bogus:int_is_not_a_function>>",
+	//	processor.doMake("wronginstance", "Bogus", slimentity.NewSlimList()), "Bogus constructor")
 	assert.Equals(t, "__EXCEPTION__:message:<<COULD_NOT_INVOKE_CONSTRUCTOR Messenger:Expected_0_parameter(s)_but_got_1>>",
 		processor.doMake("wronginstance", "Messenger", slimentity.NewSlimListContaining([]slimentity.SlimEntity{"5"})), "wrong number of parameters for constructor")
 }
 
 func TestStatementProcessorMakeOrder(t *testing.T) {
 	processor := injectStatementProcessor()
-	processor.fixtures().RegisterFixture("Order", NewOrder)
+	processor.fixtureRegistry().AddFixture(NewOrder)
+	processor.doImport("fixture")
 	assert.Equals(t, "OK", processor.doMake("instance1", "Order", slimentity.NewSlimList()), "Make Order")
 	assert.Equals(t, "/__VOID__/", processor.doCall("instance1", "SetProduct",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"cup", "0.50"})), "Call SetProduct")
@@ -145,9 +81,9 @@ func TestStatementProcessorMakeOrder(t *testing.T) {
 
 func TestStatementProcessorMakeObjectWithPanic(t *testing.T) {
 	processor := injectStatementProcessor()
-	processor.fixtures().RegisterFixture("Panic", NewObjectWithPanic)
-	assert.Equals(t, "__EXCEPTION__:message:<<COULD_NOT_INVOKE_CONSTRUCTOR Panic:Panic:_Object_creation_failed>>",
-		processor.doMake("instance1", "Panic", slimentity.NewSlimList()), "Make Object With Panic")
+	processor.fixtureRegistry().AddFixture(NewObjectWithPanic)
+	assert.Equals(t, "__EXCEPTION__:message:<<COULD_NOT_INVOKE_CONSTRUCTOR int:Panic:_Object_creation_failed>>",
+		processor.doMake("instance1", "int", slimentity.NewSlimList()), "Make Object With Panic")
 }
 
 func TestStatementProcessorSerializeObjectsIn(t *testing.T) {

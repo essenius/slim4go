@@ -24,6 +24,26 @@ const absoluteZeroInFahrenheit float64 = -459.67
 const parseError = "Expected float with suffix F, C or K but got '%v'"
 const scaleError = "Unrecognized temperature scale: %v"
 
+// NewTemperatureFactory returns a Temperature Factory
+func NewTemperatureFactory() *TemperatureFactory {
+	return new(TemperatureFactory)
+}
+
+// TemperatureFactory is an example fixture factory.
+type TemperatureFactory struct{}
+
+// NewTemperatureConverter creates a TemperatureConverter.
+func (factory *TemperatureFactory) NewTemperatureConverter() *TemperatureConverter {
+	return new(TemperatureConverter)
+}
+
+// NewTemperature creates a Temperature.
+func (factory *TemperatureFactory) NewTemperature(input string) *Temperature {
+	temperature := new(Temperature)
+	temperature.Parse(input)
+	return temperature
+}
+
 // TemperatureConverter shows how to use objects as parameters.
 type TemperatureConverter struct{}
 
@@ -32,21 +52,9 @@ func (temperatureConverter *TemperatureConverter) ConvertTo(input *Temperature, 
 	return input.ValueIn(scale)
 }
 
-// NewTemperatureConverter is the constructor for TemperatureConverter.
-func NewTemperatureConverter() *TemperatureConverter {
-	return new(TemperatureConverter)
-}
-
 // Temperature is an example parsable object.
 type Temperature struct {
 	value float64
-}
-
-//NewTemperature is the constructor for Temperature.
-func NewTemperature(input string) *Temperature {
-	temperature := new(Temperature)
-	temperature.Parse(input)
-	return temperature
 }
 
 // ToString serializes a Temperature.

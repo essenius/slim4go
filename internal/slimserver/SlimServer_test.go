@@ -21,6 +21,7 @@ import (
 	"github.com/essenius/slim4go/examples/demofixtures"
 
 	"github.com/essenius/slim4go/internal/assert"
+	"github.com/essenius/slim4go/internal/fixture"
 	"github.com/essenius/slim4go/internal/slimcontext"
 	"github.com/essenius/slim4go/internal/slimlog"
 	"github.com/essenius/slim4go/internal/slimprocessor"
@@ -101,23 +102,23 @@ func TestServerListenError(t *testing.T) {
 	context.Initialize(args)
 	context.Port = -1
 	messenger1 := newTestMessenger(t, []string{}, []string{}, "ListenError")
-	slimServer1 := newSlimServer(slimprocessor.InjectFixtures(), messenger1, slimprocessor.InjectSlimProcessor())
+	slimServer1 := newSlimServer(fixture.InjectRegistry(), messenger1, slimprocessor.InjectSlimInterpreter())
 	err1 := slimServer1.Serve()
 	assert.Equals(t, "ListenError", err1.Error(), "Error listening")
 
 	messenger2 := newTestMessenger(t, []string{"a"}, []string{"Slim -- V0.5\n"}, "SendError")
-	slimServer2 := newSlimServer(slimprocessor.InjectFixtures(), messenger2, slimprocessor.InjectSlimProcessor())
+	slimServer2 := newSlimServer(fixture.InjectRegistry(), messenger2, slimprocessor.InjectSlimInterpreter())
 	err2 := slimServer2.Serve()
 	assert.Equals(t, "SendError", err2.Error(), "Error sending")
 }
 
 func TestServerServe(t *testing.T) {
 	testInput := []string{
-		"000459:[000004:" +
-			"000096:[000004:000015:scriptTable_0_0:000004:make:000016:scriptTableActor:000020:TemperatureConverter:]:" +
+		"000472:[000004:" +
+			"000109:[000004:000015:scriptTable_0_0:000004:make:000016:scriptTableActor:000033:demofixtures.TemperatureConverter:]:" +
 			"000127:[000007:000015:scriptTable_0_1:000013:callAndAssign:000004:temp:000016:scriptTableActor:000009:ConvertTo:000004:68 F:000001:C:]:" +
 			"000093:[000005:000015:scriptTable_0_2:000004:call:000016:scriptTableActor:000004:echo:000005:$temp:]:" +
-			"000102:[000006:000015:scriptTable_0_3:000004:call:000016:scriptTableActor:000009:ConvertTo:000000::000001:K:]:]",
+			"000102:[000006:000015:scriptTable_0_3:000004:call:000016:scriptTableActor:000009:convertTo:000000::000001:K:]:]",
 		"000003:bye",
 	}
 
@@ -138,16 +139,17 @@ func TestServerServe(t *testing.T) {
 	}
 	context.Initialize(args)
 	messenger1 := newTestMessenger(t, testInput, expectedOutput, "Test 1")
-	slimServer1 := newSlimServer(slimprocessor.InjectFixtures(), messenger1, slimprocessor.InjectSlimProcessor())
-	slimServer1.RegisterFixture("TemperatureConverter", demofixtures.NewTemperatureConverter)
+	slimServer1 := newSlimServer(fixture.InjectRegistry(), messenger1, slimprocessor.InjectSlimInterpreter())
+	slimServer1.RegisterFixturesFrom(demofixtures.NewTemperatureFactory())
 	slimServer1.Serve()
 
 	messenger2 := newTestMessenger(t, []string{"000005:bogus"}, []string{"Slim -- V0.5\n"}, "Test 2 - bogus message")
-	slimServer2 := newSlimServer(slimprocessor.InjectFixtures(), messenger2, slimprocessor.InjectSlimProcessor())
+	slimServer2 := newSlimServer(fixture.InjectRegistry(), messenger2, slimprocessor.InjectSlimInterpreter())
 	slimServer2.Serve()
 
 	messenger3 := newTestMessenger(t, []string{"000005:bye"}, []string{"Slim -- V0.5\n"}, "Test 3 - size wrong")
-	slimServer3 := newSlimServer(slimprocessor.InjectFixtures(), messenger3, slimprocessor.InjectSlimProcessor())
+	slimServer3 := newSlimServer(fixture.InjectRegistry(), messenger3, slimprocessor.InjectSlimInterpreter())
 	slimServer3.Serve()
 
+	assert.Equals(t, "Could not add fixture '1'", slimServer3.RegisterFixture(1).Error(), "Wrong argument for RegisterFixture returns an error")
 }

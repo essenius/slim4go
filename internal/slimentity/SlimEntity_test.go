@@ -33,7 +33,6 @@ func TestSlimListBaseTests(t *testing.T) {
 	assert.Equals(t, "[]", fmt.Sprintf("%v", ToSlice(list1)), "empty list to slice")
 
 	assert.Equals(t, 0, list1.Length(), "list1 has length 0")
-	//assert.Panics(t, func() { _ = list1.Pop() }, "Can't pop from empty list", "list1.Pop()")
 	var entity SlimEntity = "a"
 	assert.Equals(t, "a", ToString(entity), "Entity with string value ToString")
 	list1.Append(entity)
@@ -41,7 +40,6 @@ func TestSlimListBaseTests(t *testing.T) {
 	assert.Equals(t, "[a]", list1.ToString(), "List with 1 item ToString")
 	assert.Equals(t, 1, list1.Length(), "list1 has length 1")
 	assert.Equals(t, "a", list1.ElementAt(0), "List1.ElementAt(0)==a")
-	//assert.Equals(t, "string", list1.TypeOfElementAt(0), "Type is string")
 	assert.IsTrue(t, !list1.Equals(list2), "empty list not equal to list with one element")
 	list2.Append("a")
 	assert.IsTrue(t, list1.Equals(list2), "two lists with the same single value")

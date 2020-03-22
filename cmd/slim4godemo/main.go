@@ -27,8 +27,6 @@ func main() {
 	slim4go.RegisterFixture(demofixtures.NewFixtureMapping)
 	slim4go.RegisterFixture(demofixtures.NewMemoObject)
 	slim4go.RegisterFixture(demofixtures.NewTableFixture)
-	//slim4go.RegisterFixture(demofixtures.NewTemperature)
-	//slim4go.RegisterFixture(demofixtures.NewTemperatureConverter)
 	slim4go.RegisterFixture(demofixtures.NewTestQuery)
 	slim4go.RegisterFixture(demofixtures.NewWaiter)
 	slim4go.Serve()

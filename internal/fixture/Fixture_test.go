@@ -34,14 +34,14 @@ func (factory *FixtureFactory) NewMessenger() *Messenger {
 	return new(Messenger)
 }
 
+type Messenger struct {
+}
+
 type Order struct {
 }
 
 func NewOrder() *Order {
 	return new(Order)
-}
-
-type Messenger struct {
 }
 
 func TestFixtureNamespace(t *testing.T) {

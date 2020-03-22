@@ -22,7 +22,7 @@ import (
 // Definitions and constructors for Fixture
 
 // A fixure is what FitNesse documentation often calls a class.
-// A constructor is a function that creates the object, and a factory is an object that provides constructor methods
+// A constructor is a function that creates the object, and a factory is an object that provides constructor methods.
 // Using interface{} is the only type I know of that can contain a function with an unspecified number of parameters and return values.
 // We need this because the design is based on allowing maximum freedom for the fixture developers.
 
@@ -31,7 +31,6 @@ type anyMap map[string]interface{}
 // Registry defines the fixture registry.
 type Registry struct {
 	constructor anyMap
-	factory     anyMap
 	namespace   []string
 }
 
@@ -39,14 +38,13 @@ type Registry struct {
 func NewRegistry() *Registry {
 	registry := new(Registry)
 	registry.constructor = make(anyMap)
-	registry.factory = make(anyMap)
 	registry.namespace = []string{}
 	return registry
 }
 
 var registryInstance *Registry
 
-// InjectRegistry returns a registry.
+// InjectRegistry returns a registry (single instance).
 func InjectRegistry() *Registry {
 	if registryInstance == nil {
 		registryInstance = NewRegistry()
@@ -73,21 +71,7 @@ func fixtureNameFromConstructor(constructor interface{}) string {
 	return typeWithoutPointer(firstOutFieldType)
 }
 
-// FixtureNamed returns the fixture with the specified name.
-func (registry *Registry) FixtureNamed(fixtureName string) interface{} {
-	prefixes := []string{""}
-	for _, namespace := range registry.namespace {
-		prefixes = append(prefixes, namespace+".")
-	}
-	for _, prefix := range prefixes {
-		nameWithNamespace := prefix + fixtureName
-		fixture, ok := registry.constructor[nameWithNamespace]
-		if ok {
-			return fixture
-		}
-	}
-	return nil
-}
+// Registry methods
 
 // AddFixture registers a fixture definition via its constructor function.
 func (registry *Registry) AddFixture(fixtureConstructor interface{}) error {
@@ -121,4 +105,20 @@ func (registry *Registry) AddNamespace(newNamespace string) {
 		}
 	}
 	registry.namespace = append(registry.namespace, newNamespace)
+}
+
+// FixtureNamed returns the fixture with the specified name.
+func (registry *Registry) FixtureNamed(fixtureName string) interface{} {
+	prefixes := []string{""}
+	for _, namespace := range registry.namespace {
+		prefixes = append(prefixes, namespace+".")
+	}
+	for _, prefix := range prefixes {
+		nameWithNamespace := prefix + fixtureName
+		fixture, ok := registry.constructor[nameWithNamespace]
+		if ok {
+			return fixture
+		}
+	}
+	return nil
 }

@@ -26,12 +26,8 @@ func NewFixtureFactory() *FixtureFactory {
 	return new(FixtureFactory)
 }
 
-func (factory *FixtureFactory) NewOrder(productID string, unitPrice float64, units int) *Order {
-	order := new(Order)
-	order.ProductID = productID
-	order.UnitPrice = unitPrice
-	order.Units = units
-	return order
+func (factory *FixtureFactory) NewOrder() *Order {
+	return new(Order)
 }
 
 func (factory *FixtureFactory) NewMessenger() *Messenger {
@@ -39,70 +35,13 @@ func (factory *FixtureFactory) NewMessenger() *Messenger {
 }
 
 type Order struct {
-	ProductID string
-	Units     int
-	UnitPrice float64
 }
 
 func NewOrder() *Order {
 	return new(Order)
 }
 
-func (order *Order) SetProduct(productID string, unitPrice float64) {
-	order.ProductID = productID
-	order.UnitPrice = unitPrice
-}
-
-func (order *Order) Price() float64 {
-	return order.UnitPrice * float64(order.Units)
-}
-
-func (order *Order) SetUnits(units int) {
-	order.Units = units
-}
-
 type Messenger struct {
-	MessageField string
-}
-
-func NewMessenger() *Messenger {
-	return new(Messenger)
-}
-
-func (messenger *Messenger) SetMessage(message string) {
-	messenger.MessageField = message
-}
-
-func (messenger *Messenger) Message() string {
-	return messenger.MessageField
-}
-
-func (messenger *Messenger) Panic() {
-	panic(messenger.Message())
-}
-
-func TestFixtureTypeWithoutPointer(t *testing.T) {
-	assert.Equals(t, "test1.test2", typeWithoutPointer("*test1.test2"), "with pointer")
-	assert.Equals(t, "test1.test2", typeWithoutPointer("test1.test2"), "without pointer")
-	assert.Equals(t, "", typeWithoutPointer(""), "empty")
-}
-
-func TestFixtureRegisterFixtures(t *testing.T) {
-	registryInstance = nil
-	registry := InjectRegistry()
-	assert.Equals(t, nil, registry.AddFixture(NewOrder), "Add Fixure NewOrder succeeds")
-	assert.Equals(t, 1, len(registry.constructor), "one fixture added")
-	assert.Equals(t, nil, registry.AddFixturesFrom(NewFixtureFactory()), "AddFixturesFromFactory succeeded")
-	assert.Equals(t, 2, len(registry.constructor), "two more fixtures added, but one already existed")
-	order := registry.FixtureNamed("fixture.Order")
-	assert.IsTrue(t, order != nil, "Order constructor exists")
-	messenger := registry.FixtureNamed("fixture.Messenger")
-	assert.IsTrue(t, messenger != nil, "Messenger constructor exists")
-	messengerValue := reflect.ValueOf(messenger)
-	assert.Equals(t, "func", messengerValue.Kind().String(), "Messenger constructor is a func")
-	object := messengerValue.Call([]reflect.Value{})
-	assert.Equals(t, "*fixture.Messenger", object[0].Type().String(), "Messenger object created via constructor")
-	assert.Equals(t, "Could not add fixture '1'", registry.AddFixture(1).Error(), "Add invalid fixture")
 }
 
 func TestFixtureNamespace(t *testing.T) {
@@ -124,4 +63,28 @@ func TestFixtureNamespace(t *testing.T) {
 	assert.IsTrue(t, order2 != nil, "Order found with namespace spec")
 	assert.Equals(t, reflect.TypeOf(order1).String(), reflect.TypeOf(order2).String(), "Order constructor signatures are equal")
 	assert.Equals(t, nil, registry.FixtureNamed("bogus"), "Unknown fixture name returns nil")
+}
+
+func TestFixtureRegisterFixtures(t *testing.T) {
+	registryInstance = nil
+	registry := InjectRegistry()
+	assert.Equals(t, nil, registry.AddFixture(NewOrder), "Add Fixure NewOrder succeeds")
+	assert.Equals(t, 1, len(registry.constructor), "one fixture added")
+	assert.Equals(t, nil, registry.AddFixturesFrom(NewFixtureFactory()), "AddFixturesFromFactory succeeded")
+	assert.Equals(t, 2, len(registry.constructor), "two more fixtures added, but one already existed")
+	order := registry.FixtureNamed("fixture.Order")
+	assert.IsTrue(t, order != nil, "Order constructor exists")
+	messenger := registry.FixtureNamed("fixture.Messenger")
+	assert.IsTrue(t, messenger != nil, "Messenger constructor exists")
+	messengerValue := reflect.ValueOf(messenger)
+	assert.Equals(t, "func", messengerValue.Kind().String(), "Messenger constructor is a func")
+	object := messengerValue.Call([]reflect.Value{})
+	assert.Equals(t, "*fixture.Messenger", object[0].Type().String(), "Messenger object created via constructor")
+	assert.Equals(t, "Could not add fixture '1'", registry.AddFixture(1).Error(), "Add invalid fixture")
+}
+
+func TestFixtureTypeWithoutPointer(t *testing.T) {
+	assert.Equals(t, "test1.test2", typeWithoutPointer("*test1.test2"), "with pointer")
+	assert.Equals(t, "test1.test2", typeWithoutPointer("test1.test2"), "without pointer")
+	assert.Equals(t, "", typeWithoutPointer(""), "empty")
 }

@@ -37,14 +37,14 @@ type Parser struct {
 
 // NewParser creates a new Parser.
 func NewParser(symbols interfaces.SymbolCollector) *Parser {
-	aParser := new(Parser)
-	aParser.symbols = symbols
-	return aParser
+	parser := new(Parser)
+	parser.symbols = symbols
+	return parser
 }
 
 // SetObjectSerializer injects the object serializer. We need to do it this way because of a bidirectional relationship.
-func (aParser *Parser) SetObjectSerializer(objectSerializer interfaces.ObjectSerializer) {
-	aParser.objectSerializer = objectSerializer
+func (parser *Parser) SetObjectSerializer(objectSerializer interfaces.ObjectSerializer) {
+	parser.objectSerializer = objectSerializer
 }
 
 // Helper functions
@@ -123,8 +123,8 @@ func toMatchingClosingBracket(input string) (string, string, error) {
 
 // CallFunction calls a function including parsing/marshalling the input parameters and transforming the output.
 // TODO: This is part of the bidirectional dependency issue.
-func (aParser *Parser) CallFunction(function reflect.Value, args []string) (returnEntity slimentity.SlimEntity, err error) {
-	arguments, err := aParser.matchParamType(args, function)
+func (parser *Parser) CallFunction(function reflect.Value, args []string) (returnEntity slimentity.SlimEntity, err error) {
+	arguments, err := parser.matchParamType(args, function)
 	if err != nil {
 		return "", err
 	}
@@ -139,7 +139,7 @@ func (aParser *Parser) CallFunction(function reflect.Value, args []string) (retu
 	return slimentity.TransformCallResult(returnValue), nil
 }
 
-func (aParser *Parser) matchParamType(paramIn []string, method reflect.Value) (*[]reflect.Value, error) {
+func (parser *Parser) matchParamType(paramIn []string, method reflect.Value) (*[]reflect.Value, error) {
 	result := []reflect.Value{}
 	methodType := method.Type()
 	if methodType.Kind() != reflect.Func {
@@ -157,7 +157,7 @@ func (aParser *Parser) matchParamType(paramIn []string, method reflect.Value) (*
 	}
 	for paramIndex, param := range paramIn {
 		paramType := paramTypeFor(methodType, paramIndex)
-		resultValue, err := aParser.Parse(param, paramType)
+		resultValue, err := parser.Parse(param, paramType)
 		if err != nil {
 			return nil, err
 		}
@@ -167,12 +167,12 @@ func (aParser *Parser) matchParamType(paramIn []string, method reflect.Value) (*
 }
 
 // Parse takes an input string and parses it to the desired type.
-func (aParser *Parser) Parse(input string, targetType reflect.Type) (interface{}, error) {
+func (parser *Parser) Parse(input string, targetType reflect.Type) (interface{}, error) {
 	if isPredefinedType(targetType) {
-		resolvedInput := aParser.ReplaceSymbolsIn(input)
-		return aParser.parsePredefined(resolvedInput, targetType)
+		resolvedInput := parser.ReplaceSymbolsIn(input)
+		return parser.parsePredefined(resolvedInput, targetType)
 	}
-	if symbolValue, ok := aParser.symbols.NonTextSymbol(input); ok {
+	if symbolValue, ok := parser.symbols.NonTextSymbol(input); ok {
 		if reflect.TypeOf(symbolValue).AssignableTo(targetType) {
 			return symbolValue, nil
 		}
@@ -180,39 +180,37 @@ func (aParser *Parser) Parse(input string, targetType reflect.Type) (interface{}
 	}
 	// target is no predefined type, input is no list, and no Symbol as Object.
 	// Check if it needs to be put in an interface - then we need to infer the type.
-	resolvedInput := aParser.ReplaceSymbolsIn(input)
+	resolvedInput := parser.ReplaceSymbolsIn(input)
 	resolvedInputType := reflect.TypeOf(resolvedInput)
 	if resolvedInputType.Kind() == reflect.String && targetType.Kind() == reflect.Interface {
-		return aParser.parseToInferredType(resolvedInput), nil
+		return parser.parseToInferredType(resolvedInput), nil
 	}
 
 	// See if the target is a fixture we can parse into
 	if slimentity.IsObjectType(targetType) {
-		return aParser.parseFixture(resolvedInput, targetType)
+		return parser.parseFixture(resolvedInput, targetType)
 	}
 	switch targetType.Kind() {
 	case reflect.Map:
-		return aParser.parseMap(resolvedInput, targetType)
+		return parser.parseMap(resolvedInput, targetType)
 	case reflect.Slice:
-		result, err := aParser.parseSlice(resolvedInput, targetType)
+		result, err := parser.parseSlice(resolvedInput, targetType)
 		return result, err
 	case reflect.Ptr:
-		return aParser.parsePtr(input, targetType)
+		return parser.parsePtr(input, targetType)
 	default:
 		return nil, toErrorf("Don't know how to resolve '%v' into '%v'", resolvedInput, targetType)
 	}
 }
 
 // parseFixture tries to parse a fixture (struct) by calling its Parse(string) pointer receiver.
-// this is a bit tricky, as parseFixture can be called when inputType is the struct type itself.
-// If so, we we need to create the necessary pointer, make the call, and dereference afterwards
-func (aParser *Parser) parseFixture(input string, inputType reflect.Type) (interface{}, error) {
-	return aParser.objectSerializer.Deserialize(inputType, input)
+func (parser *Parser) parseFixture(input string, inputType reflect.Type) (interface{}, error) {
+	return parser.objectSerializer.Deserialize(inputType, input)
 }
 
 // parseMap converts a hash table (rows of two columns) into a Map of the specified type.
 // It uses the HTML table format for this, as specified by Slim
-func (aParser *Parser) parseMap(input string, targetType reflect.Type) (interface{}, error) {
+func (parser *Parser) parseMap(input string, targetType reflect.Type) (interface{}, error) {
 	matrix, err := parseHTMLTable(input)
 	if err != nil {
 		return nil, toErrorf("'%v' is not a valid specification for '%v'", input, targetType)
@@ -225,10 +223,10 @@ func (aParser *Parser) parseMap(input string, targetType reflect.Type) (interfac
 		}
 		var key, value interface{}
 		var err error
-		if key, err = aParser.Parse(row[0], targetType.Key()); err != nil {
+		if key, err = parser.Parse(row[0], targetType.Key()); err != nil {
 			return nil, toErrorf("Could not parse key '%v' in hash '%v'", row[0], targetType)
 		}
-		if value, err = aParser.Parse(row[1], targetType.Elem()); err != nil {
+		if value, err = parser.Parse(row[1], targetType.Elem()); err != nil {
 			return nil, toErrorf("Could not parse value '%v' in hash '%v'", row[1], targetType)
 		}
 		returnValue.SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(value))
@@ -238,7 +236,7 @@ func (aParser *Parser) parseMap(input string, targetType reflect.Type) (interfac
 
 // parsePredefined takes the resolved input string and tries to convert it to the specified predefined type.
 // Cannot handle complex numbers since there is no ParseComplex at this time
-func (aParser *Parser) parsePredefined(resolvedInput string, targetType reflect.Type) (interface{}, error) {
+func (parser *Parser) parsePredefined(resolvedInput string, targetType reflect.Type) (interface{}, error) {
 	var result interface{}
 	var err error
 	switch targetType.Kind() {
@@ -261,8 +259,8 @@ func (aParser *Parser) parsePredefined(resolvedInput string, targetType reflect.
 	return nil, toErrorf("Could not convert '%v' to type '%v'", resolvedInput, targetType.String())
 }
 
-func (aParser *Parser) parsePtr(input string, targetType reflect.Type) (interface{}, error) {
-	result, err := aParser.Parse(input, targetType.Elem())
+func (parser *Parser) parsePtr(input string, targetType reflect.Type) (interface{}, error) {
+	result, err := parser.Parse(input, targetType.Elem())
 	if err != nil {
 		return nil, err
 	}
@@ -271,12 +269,12 @@ func (aParser *Parser) parsePtr(input string, targetType reflect.Type) (interfac
 	return pointer.Interface(), nil
 }
 
-func (aParser *Parser) parseSlice(input string, targetType reflect.Type) (interface{}, error) {
+func (parser *Parser) parseSlice(input string, targetType reflect.Type) (interface{}, error) {
 	input = strings.TrimSpace(input)
 	if len(input) > 0 && input[0] == '[' {
 		var entry interface{}
 		var err error
-		if entry, _, err = aParser.parseSubslice(input[1:], targetType); err != nil {
+		if entry, _, err = parser.parseSubslice(input[1:], targetType); err != nil {
 			return nil, err
 		}
 		return entry, nil
@@ -284,7 +282,7 @@ func (aParser *Parser) parseSlice(input string, targetType reflect.Type) (interf
 	return nil, toErrorf("'%v' is not an array", input)
 }
 
-func (aParser *Parser) parseSliceInternal(input string, targetType reflect.Type) (interface{}, error) {
+func (parser *Parser) parseSliceInternal(input string, targetType reflect.Type) (interface{}, error) {
 	slice := reflect.MakeSlice(reflect.SliceOf(targetType.Elem()), 0, 0)
 	for i := 0; ; i++ {
 		input = strings.TrimSpace(input)
@@ -297,14 +295,14 @@ func (aParser *Parser) parseSliceInternal(input string, targetType reflect.Type)
 			err        error
 		)
 		if input[0] == '[' {
-			if sliceValue, next, err = aParser.parseSubslice(input[1:], targetType.Elem()); err != nil {
+			if sliceValue, next, err = parser.parseSubslice(input[1:], targetType.Elem()); err != nil {
 				return nil, err
 			}
 			_, input = splitOnNextComma(next)
 		} else {
 			var entry string
 			entry, input = splitOnNextComma(input)
-			sliceValue, err = aParser.Parse(entry, targetType.Elem())
+			sliceValue, err = parser.Parse(entry, targetType.Elem())
 			if err != nil {
 				return nil, toErrorf("Can't parse '%v' as element for slice '%v'", entry, targetType)
 			}
@@ -313,19 +311,19 @@ func (aParser *Parser) parseSliceInternal(input string, targetType reflect.Type)
 	}
 }
 
-func (aParser *Parser) parseSubslice(input string, targetType reflect.Type) (interface{}, string, error) {
+func (parser *Parser) parseSubslice(input string, targetType reflect.Type) (interface{}, string, error) {
 	entry, next, err1 := toMatchingClosingBracket(input)
 	if err1 != nil {
 		return nil, "", err1
 	}
-	result, err2 := aParser.parseSliceInternal(entry, targetType)
+	result, err2 := parser.parseSliceInternal(entry, targetType)
 	if err2 != nil {
 		return nil, "", err2
 	}
 	return result, next, nil
 }
 
-func (aParser *Parser) parseToInferredType(input string) interface{} {
+func (parser *Parser) parseToInferredType(input string) interface{} {
 	if result, err := strconv.ParseInt(input, 0, 0); err == nil {
 		return result
 	}
@@ -342,28 +340,28 @@ func (aParser *Parser) parseToInferredType(input string) interface{} {
 }
 
 // ReplaceSymbolsIn replaces all occurrences of symbols in a string to their value.
-func (aParser *Parser) ReplaceSymbolsIn(source string) string {
+func (parser *Parser) ReplaceSymbolsIn(source string) string {
 	regex := regexp.MustCompile(`\$` + symbolPattern)
-	return regex.ReplaceAllStringFunc(source, aParser.replaceSymbolValue)
+	return regex.ReplaceAllStringFunc(source, parser.replaceSymbolValue)
 }
 
 // ReplaceSymbols does ReplaceSymbolsIn recursively for a SlimList.
-func (aParser *Parser) ReplaceSymbols(source interface{}) interface{} {
+func (parser *Parser) ReplaceSymbols(source interface{}) interface{} {
 	if slimentity.IsSlimList(source) {
 		sourceList := source.(*slimentity.SlimList)
 		result := slimentity.NewSlimList()
 		for _, value := range *sourceList {
-			result.Append(aParser.ReplaceSymbols(value))
+			result.Append(parser.ReplaceSymbols(value))
 		}
 		return result
 	}
-	return aParser.ReplaceSymbolsIn(source.(string))
+	return parser.ReplaceSymbolsIn(source.(string))
 }
 
-func (aParser *Parser) replaceSymbolValue(symbolName string) string {
-	if symbolValue := aParser.symbols.Get(symbolName); symbolValue != nil {
+func (parser *Parser) replaceSymbolValue(symbolName string) string {
+	if symbolValue := parser.symbols.Get(symbolName); symbolValue != nil {
 		if slimentity.IsObject(symbolValue) {
-			return aParser.objectSerializer.Serialize(symbolValue)
+			return parser.objectSerializer.Serialize(symbolValue)
 		}
 		return symbolValue.(string)
 	}

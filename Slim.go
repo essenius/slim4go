@@ -28,7 +28,6 @@ func Server() *slimserver.SlimServer {
 	// We need to do this as early as possible.
 	// It gets the command line parameters and initializes the log
 	inject.Context().Initialize(os.Args)
-	//slimcontext.InjectContext().Initialize(os.Args)
 	return inject.SlimServer()
 }
 

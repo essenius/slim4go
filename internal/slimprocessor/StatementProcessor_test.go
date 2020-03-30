@@ -15,96 +15,161 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/essenius/slim4go/internal/fixture"
+	"github.com/essenius/slim4go/internal/standardlibrary"
+
 	"github.com/essenius/slim4go/internal/assert"
 	"github.com/essenius/slim4go/internal/slimentity"
 )
+
+const instanceName = "scriptTableActor"
+
+type Messenger struct {
+	MessageField string
+}
+
+func NewMessenger() *Messenger {
+	return new(Messenger)
+}
+
+func (messenger *Messenger) SetMessage(message string) {
+	messenger.MessageField = message
+}
+
+func (messenger *Messenger) Message() string {
+	return messenger.MessageField
+}
 
 func (messenger *Messenger) Panic() {
 	panic(messenger.Message())
 }
 
+func initProcessorAndLibrary(t *testing.T) (*SlimStatementProcessor, *standardlibrary.StandardLibrary) {
+	symbols := NewSymbolTable()
+	parser := NewParser(symbols)
+	objectHandler := NewObjectHandler(parser)
+	parser.SetObjectSerializer(objectHandler)
+	processor := NewStatementProcessor(fixture.NewRegistry(), objectHandler, parser, symbols)
+
+	objectHandler.Add("libraryStandard", standardlibrary.New(standardlibrary.NewActorStack(), objectHandler))
+	assert.Equals(t, 1, objectHandler.Length(), "Length of object collection = 1 (libraryStandard)")
+	library := objectHandler.Get("libraryStandard").(*standardlibrary.StandardLibrary)
+	assert.IsTrue(t, library != nil, "library found")
+
+	processor.registry.AddFixture(NewMessenger)
+	assert.Equals(t, 1, processor.registry.Length(), "Length of registry = 1 (Messenger)")
+	processor.registry.AddNamespace("slimprocessor")
+
+	assert.Equals(t, "OK", processor.DoMake(instanceName, "slimprocessor.Messenger", slimentity.NewSlimList()), "Make Messenger in initProcessorAndLibrary")
+	assert.Equals(t, "/__VOID__/", processor.DoCall(instanceName, "SetMessage", slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Hello world"})), "Call Set in initProcessorAndLibrary")
+	return processor, library
+}
+
+func TestStatememtProcessorStandardLibrary(t *testing.T) {
+	processor, library := initProcessorAndLibrary(t)
+
+	fixture1 := library.GetFixture()
+	processor.SetSymbol("fixture1", fixture1)
+	assert.Equals(t, "*slimprocessor.Messenger", reflect.TypeOf(fixture1).String(), "Fixture type Messenger OK")
+	assert.Equals(t, "/__VOID__/", processor.DoCall(instanceName, "SetMessage", slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Hello world"})), "Call Set before push")
+	library.PushFixture()
+	assert.Equals(t, "/__VOID__/", processor.DoCall(instanceName, "SetMessage",
+		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Bye Bye"})), "Call Set after push")
+	assert.Equals(t, "Bye Bye", processor.DoCall(instanceName, "Message", slimentity.NewSlimList()), "Call Get before pop")
+	library.PopFixture()
+	assert.Equals(t, "Hello world", processor.DoCall(instanceName, "Message", slimentity.NewSlimList()), "Call Get after pop")
+	assert.Equals(t, "echo", library.Echo("echo"), "Echo")
+	assert.Equals(t, "OK", processor.DoMake(instanceName, "Messenger", slimentity.NewSlimList()), "Make Messenger before making $fixture1")
+	assert.Equals(t, "", processor.DoCall(instanceName, "Message", slimentity.NewSlimList()), "Check value before making $fixture1")
+	assert.Equals(t, "OK", processor.DoMake(instanceName, "$fixture1", slimentity.NewSlimList()), "Make $fixture1")
+	assert.Equals(t, "Hello world", processor.DoCall(instanceName, "Message", slimentity.NewSlimList()), "Call Get after making $fixture1")
+	assert.Equals(t, "__EXCEPTION__:message:<<Actor stack empty>>", library.PopFixture(), "Pop fixture on empty stack")
+}
 func TestStatementProcessorMakeMessenger(t *testing.T) {
-	processor := injectStatementProcessor()
-	processor.setSymbol("test1", "TestResponse")
-	assert.Equals(t, "TestResponse", processor.doCall("instance1", "CloneSymbol",
+	processor, _ := initProcessorAndLibrary(t)
+	processor.SetSymbol("test1", "TestResponse")
+	assert.Equals(t, "TestResponse", processor.DoCall("instance1", "CloneSymbol",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"$test1"})), "Call cloneSymbol without creating an instance first")
 
-	processor.fixtureRegistry().AddFixture(NewMessenger)
-	processor.doImport("slimprocessor")
-	assert.Equals(t, "OK", processor.doMake("instance1", "Messenger", slimentity.NewSlimList()), "Make")
-	assert.Equals(t, "/__VOID__/", processor.doCall("instance1", "SetMessage",
+	processor.registry.AddFixture(NewMessenger)
+	processor.DoImport("slimprocessor")
+	assert.Equals(t, "OK", processor.DoMake("instance1", "Messenger", slimentity.NewSlimList()), "Make")
+	assert.Equals(t, "/__VOID__/", processor.DoCall("instance1", "SetMessage",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Hello world"})), "Call Set Message (method)")
-	assert.Equals(t, "Hello world", processor.doCall("instance1", "Message", slimentity.NewSlimList()), "Call Message (method)")
-	assert.Equals(t, "Hello world", processor.doCall("instance1", "GetMessageField", slimentity.NewSlimList()), "Call Get Message Field (field)")
-	assert.Equals(t, "Hello world", processor.doCall("instance1", "MessageField", slimentity.NewSlimList()), "Call Message Field (field)")
-	assert.Equals(t, "/__VOID__/", processor.doCall("instance1", "SetMessageField",
+	assert.Equals(t, "Hello world", processor.DoCall("instance1", "Message", slimentity.NewSlimList()), "Call Message (method)")
+	assert.Equals(t, "Hello world", processor.DoCall("instance1", "GetMessageField", slimentity.NewSlimList()), "Call Get Message Field (field)")
+	assert.Equals(t, "Hello world", processor.DoCall("instance1", "MessageField", slimentity.NewSlimList()), "Call Message Field (field)")
+	assert.Equals(t, "/__VOID__/", processor.DoCall("instance1", "SetMessageField",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"Goodbye"})), "Call Set Message Field (field)")
-	assert.Equals(t, "Goodbye", processor.doCall("instance1", "Message", slimentity.NewSlimList()), "Call Message (method)")
+	assert.Equals(t, "Goodbye", processor.DoCall("instance1", "Message", slimentity.NewSlimList()), "Call Message (method)")
 
-	processor.setSymbol("fixture", "Messenger")
-	assert.Equals(t, "OK", processor.doMake("instance1", "$fixture", slimentity.NewSlimList()), "Remake an existing instance overwrites it without error. It uses a string symbol as fixture name")
-	assert.Equals(t, "", processor.doCall("instance1", "Message", slimentity.NewSlimList()), "Call Get after creating new instance1")
-	processor.setSymbol("message", "Bye bye")
-	processor.setSymbol("method", "SetMessage")
-	assert.Equals(t, "/__VOID__/", processor.doCall("instance1", "SetMessage",
+	processor.SetSymbol("fixture", "Messenger")
+	assert.Equals(t, "OK", processor.DoMake("instance1", "$fixture", slimentity.NewSlimList()),
+		"Remake an existing instance overwrites it without error. It uses a string symbol as fixture name")
+	assert.Equals(t, "", processor.DoCall("instance1", "Message", slimentity.NewSlimList()), "Call Get after creating new instance1")
+	processor.SetSymbol("message", "Bye bye")
+	processor.SetSymbol("method", "SetMessage")
+	assert.Equals(t, "/__VOID__/", processor.DoCall("instance1", "SetMessage",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"$message"})), "Call Set with symbol in args")
-	assert.Equals(t, "Bye bye", processor.doCall("instance1", "Message", slimentity.NewSlimList()), "Call Get after setting with symbols")
-	assert.Equals(t, "__EXCEPTION__:message:<<Panic: Bye bye>>", processor.doCall("instance1", "Panic", slimentity.NewSlimList()), "Panic is caught and reported")
-	assert.Equals(t, "__EXCEPTION__:message:<<Expected 1 parameter(s) but got 0>>", processor.doCall("instance1", "SetMessage", slimentity.NewSlimList()), "Call Set with empty parameter set")
-	assert.Equals(t, "SetMessage", processor.doCall("instance1", "CloneSymbol",
+	assert.Equals(t, "Bye bye", processor.DoCall("instance1", "Message", slimentity.NewSlimList()), "Call Get after setting with symbols")
+	assert.Equals(t, "__EXCEPTION__:message:<<Panic: Bye bye>>",
+		processor.DoCall("instance1", "Panic", slimentity.NewSlimList()), "Panic is caught and reported")
+	assert.Equals(t, "__EXCEPTION__:message:<<Expected 1 parameter(s) but got 0>>",
+		processor.DoCall("instance1", "SetMessage", slimentity.NewSlimList()), "Call Set with empty parameter set")
+	assert.Equals(t, "SetMessage", processor.DoCall("instance1", "CloneSymbol",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"$method"})), "Call cloneSymbol on instance1")
-
-	//processor.fixtureRegistry().AddFixture(1)
-
-	//assert.Equals(t, "__EXCEPTION__:message:<<COULD_NOT_INVOKE_CONSTRUCTOR Bogus:int_is_not_a_function>>",
-	//	processor.doMake("wronginstance", "Bogus", slimentity.NewSlimList()), "Bogus constructor")
 	assert.Equals(t, "__EXCEPTION__:message:<<COULD_NOT_INVOKE_CONSTRUCTOR Messenger:Expected_0_parameter(s)_but_got_1>>",
-		processor.doMake("wronginstance", "Messenger", slimentity.NewSlimListContaining([]slimentity.SlimEntity{"5"})), "wrong number of parameters for constructor")
+		processor.DoMake("wronginstance", "Messenger", slimentity.NewSlimListContaining([]slimentity.SlimEntity{"5"})),
+		"wrong number of parameters for constructor")
 }
 
 func TestStatementProcessorMakeOrder(t *testing.T) {
-	processor := injectStatementProcessor()
-	processor.fixtureRegistry().AddFixture(NewOrder)
-	processor.doImport("fixture")
-	assert.Equals(t, "OK", processor.doMake("instance1", "Order", slimentity.NewSlimList()), "Make Order")
-	assert.Equals(t, "/__VOID__/", processor.doCall("instance1", "SetProduct",
+	processor, _ := initProcessorAndLibrary(t)
+	processor.registry.AddFixture(NewOrder)
+	processor.DoImport("fixture")
+	assert.Equals(t, "OK", processor.DoMake("instance1", "Order", slimentity.NewSlimList()), "Make Order")
+	assert.Equals(t, "/__VOID__/", processor.DoCall("instance1", "SetProduct",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"cup", "0.50"})), "Call SetProduct")
-	assert.Equals(t, "/__VOID__/", processor.doCall("instance1", "SetUnits",
+	assert.Equals(t, "/__VOID__/", processor.DoCall("instance1", "SetUnits",
 		slimentity.NewSlimListContaining([]slimentity.SlimEntity{"200"})), "Call SetUnits")
-	assert.Equals(t, "100", processor.doCall("instance1", "Price", slimentity.NewSlimList()), "Call Price")
-	assert.Equals(t, "__EXCEPTION__:message:<<NO_CLASS nonexisting>>", processor.doMake("instance2", "nonexisting", slimentity.NewSlimList()), "Make a nonexisting fixture")
-	assert.Equals(t, "__EXCEPTION__:message:<<NO_INSTANCE nonexisting>>", processor.doCall("nonexisting", "Price", slimentity.NewSlimList()), "Price on nonexisting instance")
-	assert.Equals(t, "__EXCEPTION__:message:<<NO_METHOD_IN_CLASS Nonexisting[0] *slimprocessor.Order>>", processor.doCall("instance1", "Nonexisting", slimentity.NewSlimList()), "Nonexisting method on existing instance")
+	assert.Equals(t, "100", processor.DoCall("instance1", "Price", slimentity.NewSlimList()), "Call Price")
+	assert.Equals(t, "__EXCEPTION__:message:<<NO_CLASS nonexisting>>",
+		processor.DoMake("instance2", "nonexisting", slimentity.NewSlimList()), "Make a nonexisting fixture")
+	assert.Equals(t, "__EXCEPTION__:message:<<NO_INSTANCE nonexisting>>",
+		processor.DoCall("nonexisting", "Price", slimentity.NewSlimList()), "Price on nonexisting instance")
+	assert.Equals(t, "__EXCEPTION__:message:<<NO_METHOD_IN_CLASS Nonexisting[0] *slimprocessor.Order>>",
+		processor.DoCall("instance1", "Nonexisting", slimentity.NewSlimList()), "Nonexisting method on existing instance")
 	assert.Equals(t, "__EXCEPTION__:message:<<COULD_NOT_INVOKE_CONSTRUCTOR Order:Expected_0_parameter(s)_but_got_1>>",
-		processor.doMake("instance3", "Order", slimentity.NewSlimListContaining([]slimentity.SlimEntity{"entry"})), "Use a constructor with wrong number of parameters")
+		processor.DoMake("instance3", "Order", slimentity.NewSlimListContaining([]slimentity.SlimEntity{"entry"})),
+		"Use a constructor with wrong number of parameters")
 }
 
 func TestStatementProcessorMakeObjectWithPanic(t *testing.T) {
-	processor := injectStatementProcessor()
-	processor.fixtureRegistry().AddFixture(NewObjectWithPanic)
+	processor, _ := initProcessorAndLibrary(t)
+	processor.registry.AddFixture(NewObjectWithPanic)
 	assert.Equals(t, "__EXCEPTION__:message:<<COULD_NOT_INVOKE_CONSTRUCTOR int:Panic:_Object_creation_failed>>",
-		processor.doMake("instance1", "int", slimentity.NewSlimList()), "Make Object With Panic")
+		processor.DoMake("instance1", "int", slimentity.NewSlimList()), "Make Object With Panic")
 }
 
 func TestStatementProcessorSerializeObjectsIn(t *testing.T) {
-	processor := injectStatementProcessor()
+	processor, _ := initProcessorAndLibrary(t)
 	test1 := "test1"
-	assert.Equals(t, test1, processor.serializeObjectsIn(test1), "string")
-	assert.IsTrue(t, !slimentity.IsObject(reflect.ValueOf(test1)), "test1 is no object")
+	assert.Equals(t, test1, processor.SerializeObjectsIn(test1), "string")
+	assert.IsTrue(t, !slimentity.IsObject(test1), "test1 is no object")
 	aDemoStruct1 := &demoStruct1{"demo"}
 	aDemoStruct1.Parse("demo1")
-	assert.IsTrue(t, slimentity.IsObject(reflect.ValueOf(aDemoStruct1)), "aDemoStruct1 is an object")
-	assert.Equals(t, "demo1", processor.serializeObjectsIn(aDemoStruct1), "*struct with *ToString")
+	assert.IsTrue(t, slimentity.IsObject(aDemoStruct1), "aDemoStruct1 is an object")
+	assert.Equals(t, "demo1", processor.SerializeObjectsIn(aDemoStruct1), "*struct with *ToString")
 	aDemoStruct2 := demoStruct2{"demo2"}
-	assert.IsTrue(t, slimentity.IsObject(reflect.ValueOf(aDemoStruct2)), "aDemoStruct2 is an object")
-	assert.Equals(t, "demo2", processor.serializeObjectsIn(aDemoStruct2), "struct with ToString")
+	assert.IsTrue(t, slimentity.IsObject(aDemoStruct2), "aDemoStruct2 is an object")
+	assert.Equals(t, "demo2", processor.SerializeObjectsIn(aDemoStruct2), "struct with ToString")
 	ptrToADemoStruct2 := &aDemoStruct2
-	assert.IsTrue(t, slimentity.IsObject(reflect.ValueOf(ptrToADemoStruct2)), "*aDemoStruct2 is an object")
-	assert.Equals(t, "demo2", processor.serializeObjectsIn(ptrToADemoStruct2), "*struct with ToString")
+	assert.IsTrue(t, slimentity.IsObject(ptrToADemoStruct2), "*aDemoStruct2 is an object")
+	assert.Equals(t, "demo2", processor.SerializeObjectsIn(ptrToADemoStruct2), "*struct with ToString")
 	anEmptyStruct := emptyStruct{}
-	assert.Equals(t, "slimprocessor.emptyStruct", processor.serializeObjectsIn(anEmptyStruct), "struct without ToString")
+	assert.Equals(t, "slimprocessor.emptyStruct", processor.SerializeObjectsIn(anEmptyStruct), "struct without ToString")
 	list := slimentity.NewSlimListContaining([]slimentity.SlimEntity{"test2", aDemoStruct1, aDemoStruct2, anEmptyStruct})
-	assert.IsTrue(t, !slimentity.IsObject(reflect.ValueOf(list)), "list is no object")
+	assert.IsTrue(t, !slimentity.IsObject(list), "list is no object")
 	assert.Equals(t, "[test2, demo1, demo2, slimprocessor.emptyStruct]",
-		processor.serializeObjectsIn(list).(*slimentity.SlimList).ToString(), "list with objects")
+		processor.SerializeObjectsIn(list).(*slimentity.SlimList).ToString(), "list with objects")
 }

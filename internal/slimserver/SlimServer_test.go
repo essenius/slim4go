@@ -14,17 +14,17 @@ package slimserver
 import (
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/essenius/slim4go/examples/demofixtures"
 
 	"github.com/essenius/slim4go/internal/assert"
 	"github.com/essenius/slim4go/internal/fixture"
-	"github.com/essenius/slim4go/internal/slimcontext"
 	"github.com/essenius/slim4go/internal/slimlog"
 	"github.com/essenius/slim4go/internal/slimprocessor"
+	"github.com/essenius/slim4go/internal/standardlibrary"
 )
 
 type testMessenger struct {
@@ -46,7 +46,7 @@ func newTestMessenger(t *testing.T, input []string, output []string, description
 	return messenger
 }
 
-// Read receives a number of bytes from Stdin
+// Read receives a number of bytes from a string slice
 func (messenger *testMessenger) Read(buffer []byte) (int, error) {
 	if len(messenger.input) < messenger.readIndex {
 		assert.IsTrue(messenger.t, false, "EOF")
@@ -58,7 +58,7 @@ func (messenger *testMessenger) Read(buffer []byte) (int, error) {
 	return readBytes, err
 }
 
-// Listen starts listening on Stdin
+// Listen emulates listening. It returns an error if description prefix is ListenError.
 func (messenger *testMessenger) Listen() error {
 	messenger.readIndex = 0
 	messenger.writeIndex = 0
@@ -68,7 +68,7 @@ func (messenger *testMessenger) Listen() error {
 	return nil
 }
 
-// SendMessage sends a message on Stdout
+// SendMessage emulates sending a message. It returns an error if desciption prefix is SendError.
 func (messenger *testMessenger) SendMessage(message string) error {
 	slimlog.Trace.Println(message)
 	assert.Equals(messenger.t, messenger.output[messenger.writeIndex], message,
@@ -80,36 +80,27 @@ func (messenger *testMessenger) SendMessage(message string) error {
 	return nil
 }
 
-func TestSlimServerInject(t *testing.T) {
-	context := slimcontext.InjectContext()
-	context.Initialize([]string{"app", "1"})
-	server := InjectSlimServer()
-	assert.IsTrue(t, server.processor != nil, "processor created")
-	assert.Equals(t, reflect.TypeOf(new(slimPipe)), reflect.TypeOf(server.messenger), "messenger is slimPipe")
-
-	context.Initialize([]string{"app", "8495"})
-	server2 := InjectSlimServer()
-	assert.Equals(t, *server, *server2, "second call returns the same object")
-	assert.Equals(t, reflect.TypeOf(new(slimPipe)), reflect.TypeOf(server2.messenger), "second initialization ignored")
-}
-
-func TestServerListenError(t *testing.T) {
-	args := []string{"slim4go", "-s", "1", "2"}
-	context := slimcontext.InjectContext()
-	context.ErrorAction = func(err error) {
-		t.Fatal("Unexpected call to ErrorAction")
-	}
-	context.Initialize(args)
-	context.Port = -1
+func TestServeErrorResponses(t *testing.T) {
 	messenger1 := newTestMessenger(t, []string{}, []string{}, "ListenError")
-	slimServer1 := newSlimServer(fixture.InjectRegistry(), messenger1, slimprocessor.InjectSlimInterpreter())
+	slimServer1 := NewSlimServer(nil, messenger1, nil)
 	err1 := slimServer1.Serve()
 	assert.Equals(t, "ListenError", err1.Error(), "Error listening")
 
 	messenger2 := newTestMessenger(t, []string{"a"}, []string{"Slim -- V0.5\n"}, "SendError")
-	slimServer2 := newSlimServer(fixture.InjectRegistry(), messenger2, slimprocessor.InjectSlimInterpreter())
+	slimServer2 := NewSlimServer(nil, messenger2, nil)
 	err2 := slimServer2.Serve()
 	assert.Equals(t, "SendError", err2.Error(), "Error sending")
+
+	messenger3 := newTestMessenger(t, []string{"000005:bogus"}, []string{"Slim -- V0.5\n"}, "Test 2 - bogus message")
+	slimServer3 := NewSlimServer(nil, messenger3, nil)
+	err3 := slimServer3.Serve()
+	assert.Equals(t, "Encountered unexpected command 'bogus'", err3.Error(), "Error sending")
+
+	messenger4 := newTestMessenger(t, []string{"000005:bye"}, []string{"Slim -- V0.5\n"}, "Test 3 - size wrong")
+	slimServer4 := NewSlimServer(nil, messenger4, nil)
+	err4 := slimServer4.Serve()
+	// TODO: make this error message a bit clearer. It's a default message passing through in the marshaller
+	assert.Equals(t, "runtime error: index out of range [1] with length 1", err4.Error(), "Error sending")
 }
 
 func TestServerServe(t *testing.T) {
@@ -131,25 +122,20 @@ func TestServerServe(t *testing.T) {
 			"000120:[000002:000015:scriptTable_0_3:000080:__EXCEPTION__:message:<<Panic: Expected float with suffix F, C or K but got ''>>:]:]",
 	}
 
-	args := []string{"slim4go", "-s", "1", "1"}
+	// Spell out what the injector is expected to do.
+	registry := fixture.NewRegistry()
+	symbols := slimprocessor.NewSymbolTable()
+	parser := slimprocessor.NewParser(symbols)
+	objectHandler := slimprocessor.NewObjectHandler(parser)
+	standardLibrary := standardlibrary.New(standardlibrary.NewActorStack(), objectHandler)
+	objectHandler.Add("libraryStandard", standardLibrary)
+	parser.SetObjectSerializer(objectHandler)
+	processor := slimprocessor.NewStatementProcessor(registry, objectHandler, parser, symbols)
+	interpreter := slimprocessor.NewSlimInterpreter(processor, time.Second)
 
-	context := slimcontext.InjectContext()
-	context.ErrorAction = func(err error) {
-		t.Fatal("Unexpected call to ErrorAction")
-	}
-	context.Initialize(args)
 	messenger1 := newTestMessenger(t, testInput, expectedOutput, "Test 1")
-	slimServer1 := newSlimServer(fixture.InjectRegistry(), messenger1, slimprocessor.InjectSlimInterpreter())
+	slimServer1 := NewSlimServer(registry, messenger1, interpreter)
 	slimServer1.RegisterFixturesFrom(demofixtures.NewTemperatureFactory())
 	slimServer1.Serve()
-
-	messenger2 := newTestMessenger(t, []string{"000005:bogus"}, []string{"Slim -- V0.5\n"}, "Test 2 - bogus message")
-	slimServer2 := newSlimServer(fixture.InjectRegistry(), messenger2, slimprocessor.InjectSlimInterpreter())
-	slimServer2.Serve()
-
-	messenger3 := newTestMessenger(t, []string{"000005:bye"}, []string{"Slim -- V0.5\n"}, "Test 3 - size wrong")
-	slimServer3 := newSlimServer(fixture.InjectRegistry(), messenger3, slimprocessor.InjectSlimInterpreter())
-	slimServer3.Serve()
-
-	assert.Equals(t, "Could not add fixture '1'", slimServer3.RegisterFixture(1).Error(), "Wrong argument for RegisterFixture returns an error")
+	assert.Equals(t, "Could not add fixture '1'", slimServer1.RegisterFixture(1).Error(), "Wrong argument for RegisterFixture returns an error")
 }

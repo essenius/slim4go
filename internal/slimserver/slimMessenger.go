@@ -12,30 +12,18 @@
 package slimserver
 
 import (
-	"io"
 	"os"
 	"time"
 
-	"github.com/essenius/slim4go/internal/slimcontext"
+	"github.com/essenius/slim4go/internal/interfaces"
 	"github.com/essenius/slim4go/internal/slimlog"
 )
 
 const defaultTimeout = 30 * time.Second
 
-type slimMessenger interface {
-	io.Reader
-	Listen() error
-	SendMessage(message string) error
-}
-
-func injectMessenger() slimMessenger {
-	context := slimcontext.InjectContext()
-	slimlog.Trace.Printf("Timeout is %v", context.ConnectionTimeout)
-	return newSlimMessenger(context.Port, context.ConnectionTimeout)
-}
-
-func newSlimMessenger(port int, timeout time.Duration) slimMessenger {
-	var messenger slimMessenger
+// NewSlimMessenger creates a Pipe messenger if port = 1 and Socket messenger otherwise.
+func NewSlimMessenger(port int, timeout time.Duration) interfaces.SlimMessenger {
+	var messenger interfaces.SlimMessenger
 
 	slimUsesPipe := port == 1
 	if slimUsesPipe {

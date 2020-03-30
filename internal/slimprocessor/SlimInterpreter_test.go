@@ -13,12 +13,11 @@ package slimprocessor
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/essenius/slim4go/internal/assert"
-	"github.com/essenius/slim4go/internal/fixture"
+	"github.com/essenius/slim4go/internal/interfaces"
 	"github.com/essenius/slim4go/internal/slimentity"
 )
 
@@ -27,42 +26,38 @@ type MockStatementProcessor struct {
 	RegisterFixtureCalls int
 }
 
-func (mock *MockStatementProcessor) fixtureRegistry() *fixture.Registry {
+func (mock *MockStatementProcessor) FixtureRegistry() interfaces.Registry {
 	return nil
 }
 
-func (mock *MockStatementProcessor) doCall(instanceName, methodName string, args *slimentity.SlimList) slimentity.SlimEntity {
+func (mock *MockStatementProcessor) DoCall(instanceName, methodName string, args *slimentity.SlimList) slimentity.SlimEntity {
 	return fmt.Sprintf("Call %v %v(%v)", instanceName, methodName, args.ToString())
 }
 
-func (mock *MockStatementProcessor) doImport(path string) slimentity.SlimEntity {
+func (mock *MockStatementProcessor) DoImport(path string) slimentity.SlimEntity {
 	if path == "wait" {
 		time.Sleep(time.Duration(100) * time.Millisecond)
 	}
 	return fmt.Sprintf("Import %v", path)
 }
 
-func (mock *MockStatementProcessor) doMake(instanceName, fixtureName string, args *slimentity.SlimList) slimentity.SlimEntity {
+func (mock *MockStatementProcessor) DoMake(instanceName, fixtureName string, args *slimentity.SlimList) slimentity.SlimEntity {
 	return fmt.Sprintf("Make %v %v(%v)", instanceName, fixtureName, args.ToString())
 }
 
-func (mock *MockStatementProcessor) objects() *objectCollection {
+func (mock *MockStatementProcessor) Objects() interfaces.Collector {
 	return nil
 }
 
-func (mock *MockStatementProcessor) objectFactory() *objectFactory {
+func (mock *MockStatementProcessor) Parser() interfaces.Parser {
 	return nil
 }
 
-func (mock *MockStatementProcessor) parser() *parser {
-	return nil
-}
-
-func (mock *MockStatementProcessor) serializeObjectsIn(input slimentity.SlimEntity) slimentity.SlimEntity {
+func (mock *MockStatementProcessor) SerializeObjectsIn(input slimentity.SlimEntity) slimentity.SlimEntity {
 	return input
 }
 
-func (mock *MockStatementProcessor) setSymbol(symbol string, value interface{}) {
+func (mock *MockStatementProcessor) SetSymbol(symbol string, value interface{}) {
 	mock.SetSymbolCalls++
 }
 
@@ -75,7 +70,7 @@ func MakeInstructionList(instruction ...slimentity.SlimEntity) *slimentity.SlimL
 
 func TestSlimInterpreterExecute1(t *testing.T) {
 	MockStatementProcessor := new(MockStatementProcessor)
-	slimInterpreter := newSlimInterpreter(MockStatementProcessor, time.Duration(10)*time.Second)
+	slimInterpreter := NewSlimInterpreter(MockStatementProcessor, time.Duration(10)*time.Second)
 	importList := MakeInstructionList("import1", "import", "test")
 	assert.Equals(t, `[[import1, Import test]]`, slimInterpreter.Process(importList).ToString(), "Import")
 	makeList := MakeInstructionList("make1", "make", "instance1", "fixture", "arg1", "arg2")
@@ -93,14 +88,14 @@ func TestSlimInterpreterExecute1(t *testing.T) {
 
 func TestSlimInterpreterTimeout(t *testing.T) {
 	MockStatementProcessor := new(MockStatementProcessor)
-	slimInterpreter := newSlimInterpreter(MockStatementProcessor, time.Duration(1)*time.Nanosecond)
+	slimInterpreter := NewSlimInterpreter(MockStatementProcessor, time.Duration(1)*time.Nanosecond)
 	importList := MakeInstructionList("import1", "import", "wait")
 	assert.Equals(t, `[[import1, __EXCEPTION__:message:<<TIMED_OUT 0>>]]`, slimInterpreter.Process(importList).ToString(), "Import with timeout")
 }
 
 func TestSlimInterpreterMalformedInstructions(t *testing.T) {
 	MockStatementProcessor := new(MockStatementProcessor)
-	slimInterpreter := newSlimInterpreter(MockStatementProcessor, time.Duration(7)*time.Second)
+	slimInterpreter := NewSlimInterpreter(MockStatementProcessor, time.Duration(7)*time.Second)
 	importList := MakeInstructionList("import1", "import")
 	assert.Equals(t, `[[import1, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [import1, import]>>]]`, slimInterpreter.Process(importList).ToString(), "Import invalid")
 	makeList := MakeInstructionList("make1", "make", "instance1")
@@ -119,9 +114,3 @@ func TestSlimInterpreterMalformedInstructions(t *testing.T) {
 	assert.Equals(t, `[[bogus, __EXCEPTION__:message:<<MALFORMED_INSTRUCTION [bogus]>>]]`, slimInterpreter.Process(noCommandList).ToString(), "no command")
 }
 
-func TestSlimInterpreterInjector(t *testing.T) {
-	slimInterpreter := InjectSlimInterpreter()
-	processorType := reflect.TypeOf(slimInterpreter.processor)
-	assert.Equals(t, "*slimprocessor.slimStatementProcessor", processorType.String(), "StatementProcessor has the right type")
-	assert.Equals(t, time.Duration(0), slimInterpreter.timeout, "Default timeout 0 (not initialized yet)")
-}

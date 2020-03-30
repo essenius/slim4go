@@ -33,7 +33,7 @@ func NewSlimList() *SlimList {
 }
 
 // NewSlimListContaining creates a new SlimList with defined items.
-func NewSlimListContaining(listToAdd []SlimEntity) *SlimList {
+func NewSlimListContaining(listToAdd SlimList) *SlimList {
 	list := NewSlimList()
 	for _, entry := range listToAdd {
 		list.Append(entry)
@@ -43,16 +43,19 @@ func NewSlimListContaining(listToAdd []SlimEntity) *SlimList {
 
 // Functions
 
-// IsObject returns whether the element could be an object.
-// It's in slimentity because we don't want a dependency on the slimprocessor package.
-func IsObject(inputValue reflect.Value) bool {
-	return IsObjectType(inputValue.Type())
+// IsObject returns whether an instance could be a valid object type
+func IsObject(instance interface{}) bool {
+	return IsObjectType(reflect.TypeOf(instance))
 }
 
-// IsObjectType returns whether the type could be an object.
+// IsObjectType returns whether the type could be that of an object.
 func IsObjectType(inputType reflect.Type) bool {
 	inputKind := inputType.Kind()
 	return inputKind == reflect.Struct || (inputKind == reflect.Ptr && IsObjectType(inputType.Elem()))
+}
+
+func isObjectValue(inputValue reflect.Value) bool {
+	return IsObjectType(inputValue.Type())
 }
 
 func isPredefinedType(inputType reflect.Type) bool {
@@ -171,7 +174,7 @@ func valueToSlimEntity(inputValue reflect.Value) SlimEntity {
 	if isPredefinedType(inputValue.Type()) {
 		return fmt.Sprintf("%v", inputValue.Interface())
 	}
-	if IsObject(inputValue) {
+	if isObjectValue(inputValue) {
 		return inputValue.Interface()
 	}
 

@@ -19,14 +19,12 @@ import (
 
 // Definitions and constructors
 
-type symbolTable map[string]interface{}
+// SymbolTable contains the FitNesse symbols.
+type SymbolTable map[string]interface{}
 
-func injectSymbolTable() *symbolTable {
-	return newSymbolTable()
-}
-
-func newSymbolTable() *symbolTable {
-	symbols := make(symbolTable)
+// NewSymbolTable creates a new Symbol table.
+func NewSymbolTable() *SymbolTable {
+	symbols := make(SymbolTable)
 	return &symbols
 }
 
@@ -34,18 +32,20 @@ func newSymbolTable() *symbolTable {
 
 const symbolPattern = `[a-zA-Z][a-zA-Z0-9_]*`
 
-func (symbols *symbolTable) IsValidSymbol(source string) bool {
+func (symbols *SymbolTable) isValidSymbol(source string) bool {
 	regex := regexp.MustCompile(`^\$` + symbolPattern + "$")
 	return regex.MatchString(source)
 }
 
-func (symbols *symbolTable) IsValidSymbolName(source string) bool {
+// IsValidSymbolName returns whether the input (without the $) is a valid symbol name
+func (symbols *SymbolTable) IsValidSymbolName(source string) bool {
 	regex := regexp.MustCompile("^" + symbolPattern + "$")
 	return regex.MatchString(source)
 }
 
-func (symbols *symbolTable) NonTextSymbol(symbolName string) (interface{}, bool) {
-	if symbols.IsValidSymbol(symbolName) {
+// NonTextSymbol returhs whether the symbol is valid and contains something else than a string.
+func (symbols *SymbolTable) NonTextSymbol(symbolName string) (interface{}, bool) {
+	if symbols.isValidSymbol(symbolName) {
 		value, ok := symbols.ValueOf(symbolName)
 		if ok {
 			if reflect.TypeOf(value).Kind() != reflect.String {
@@ -56,7 +56,29 @@ func (symbols *symbolTable) NonTextSymbol(symbolName string) (interface{}, bool)
 	return nil, false
 }
 
-func (symbols *symbolTable) SetSymbol(symbol string, value interface{}) error {
+// Add adds an entry to the symbol table. TODO: not used. Optimize interfaces.
+func (symbols *SymbolTable) Add(symbolName string, value interface{}) {
+	symbols.Set(symbolName, value)
+}
+
+// Get gets an entry from the symbol table.
+func (symbols *SymbolTable) Get(symbolName string) interface{} {
+	symbolValue, _ := symbols.ValueOf(symbolName)
+	return symbolValue
+}
+
+// Set sets an entry in the symbol table.
+func (symbols *SymbolTable) Set(symbolName string, value interface{}) error {
+	return symbols.SetSymbol(symbolName, value)
+}
+
+// Length gets the number of items in the symbol table. TODO: not used. Optimize interfaces.
+func (symbols *SymbolTable) Length() int {
+	return len(*symbols)
+}
+
+// SetSymbol should be eliminated.
+func (symbols *SymbolTable) SetSymbol(symbol string, value interface{}) error {
 	if symbols.IsValidSymbolName(symbol) {
 		(*symbols)[symbol] = value
 		return nil
@@ -64,7 +86,8 @@ func (symbols *symbolTable) SetSymbol(symbol string, value interface{}) error {
 	return fmt.Errorf("Invalid symbol name: %v", symbol)
 }
 
-func (symbols *symbolTable) ValueOf(symbolName string) (interface{}, bool) {
+// ValueOf should be eliminated.
+func (symbols *SymbolTable) ValueOf(symbolName string) (interface{}, bool) {
 	symbolValue, ok := (*symbols)[symbolName[1:]]
 	return symbolValue, ok
 }

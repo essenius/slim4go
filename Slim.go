@@ -18,7 +18,7 @@ package slim4go
 import (
 	"os"
 
-	"github.com/essenius/slim4go/internal/slimcontext"
+	"github.com/essenius/slim4go/internal/inject"
 	"github.com/essenius/slim4go/internal/slimlog"
 	"github.com/essenius/slim4go/internal/slimserver"
 )
@@ -27,8 +27,9 @@ import (
 func Server() *slimserver.SlimServer {
 	// We need to do this as early as possible.
 	// It gets the command line parameters and initializes the log
-	slimcontext.InjectContext().Initialize(os.Args)
-	return slimserver.InjectSlimServer()
+	inject.Context().Initialize(os.Args)
+	//slimcontext.InjectContext().Initialize(os.Args)
+	return inject.SlimServer()
 }
 
 // Serve runs the Slim Server process.

@@ -78,8 +78,13 @@ func TestSlimListBaseTests(t *testing.T) {
 }
 
 func TestSlimEntityIsObject(t *testing.T) {
-	assert.IsTrue(t, !IsObject(reflect.ValueOf("")), "empty string is no object")
-	assert.IsTrue(t, IsObject(reflect.ValueOf(t)), "t (pointer to struct T) is an object")
+	assert.IsTrue(t, !IsObject(""), "empty string is no object")
+	assert.IsTrue(t, IsObject(t), "t (pointer to struct T) is an object")
+}
+
+func TestSlimEntityIsObjectValue(t *testing.T) {
+	assert.IsTrue(t, !isObjectValue(reflect.ValueOf("")), "empty string is no object")
+	assert.IsTrue(t, isObjectValue(reflect.ValueOf(t)), "t (pointer to struct T) is an object")
 }
 
 func TestSlimEntityTransformCallResult(t *testing.T) {

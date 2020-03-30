@@ -9,7 +9,7 @@
 //   is distributed on an "AS IS" BASIS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and limitations under the License.
 
-package slimcontext
+package context
 
 import (
 	"fmt"
@@ -36,7 +36,7 @@ func TestContextNew(t *testing.T) {
 	}
 	args := []string{"slim4go", "-s", "7", "-t", "20", "1"}
 
-	contextOk := newContext()
+	contextOk := New()
 	contextOk.ErrorAction = noCallback
 	contextOk.Initialize(args)
 	assert.Equals(t, 1, contextOk.Port, "port == 1")
@@ -47,7 +47,7 @@ func TestContextNew(t *testing.T) {
 	assert.Equals(t, 1, contextOk.Port, "Initialize not executed a second time")
 
 	args[2] = "q"
-	contextErr1 := newContext()
+	contextErr1 := New()
 	contextErr1.ErrorAction = callback1
 	contextErr1.Initialize(args)
 	assert.Equals(t, 8475, contextErr1.Port, "port ok")
@@ -56,7 +56,7 @@ func TestContextNew(t *testing.T) {
 	args[2] = "2"
 	callbackCount = 0
 	args[3] = "a"
-	contextErr2 := newContext()
+	contextErr2 := New()
 	contextErr2.ErrorAction = callback2
 	contextErr2.Initialize(args)
 	assert.Equals(t, 1, contextErr2.Port, "port defaulted to 1 with invalid port")
@@ -89,7 +89,7 @@ func TestContextParsePort(t *testing.T) {
 
 func TestContextInject(t *testing.T) {
 	fmt.Printf("%v", os.Args)
-	context := InjectContext()
+	context := New()
 	assert.Equals(t, time.Duration(0), context.InstructionTimeout, "Timeout not initialized yet")
 	assert.Equals(t, time.Duration(0), context.ConnectionTimeout, "Timeout not initialized yet")
 }

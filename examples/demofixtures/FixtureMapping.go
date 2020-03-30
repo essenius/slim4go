@@ -12,9 +12,11 @@
 package demofixtures
 
 // FixtureMapping shows how FitNesse Call functions can be mapped to members (fields/methods).
+// Only public fields or methods can be used
+
+// FixtureMapping is used to show how to map fields and methods to FitNesse script statements.
 type FixtureMapping struct {
-	PublicProperty  []string
-	privateProperty string
+	Field []string
 }
 
 // NewFixtureMapping is the constructor for Waiter.
@@ -22,17 +24,12 @@ func NewFixtureMapping() *FixtureMapping {
 	return new(FixtureMapping)
 }
 
-// PublicMethod1 sets PublicProperty.
-func (mapping *FixtureMapping) PublicMethod1(input []string) {
-	mapping.PublicProperty = input
+// Method1 sets Field.
+func (mapping *FixtureMapping) Method1(input []string) {
+	mapping.Field = input
 }
 
-// PublicMethod2 gets PublicProperty.
-func (mapping *FixtureMapping) PublicMethod2() []string {
-	return mapping.PublicProperty
-}
-
-// PublicMethod3 sets PrivateProperty.
-func (mapping *FixtureMapping) PublicMethod3(input string) {
-	mapping.privateProperty = input
+// Method2 gets Field.
+func (mapping *FixtureMapping) Method2() []string {
+	return mapping.Field
 }

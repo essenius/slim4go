@@ -18,10 +18,8 @@ import (
 	"github.com/essenius/slim4go/internal/assert"
 )
 
-var symbols *symbolTable
-
 func TestSymbolTableIsValidSymbolName(t *testing.T) {
-	symbols := newSymbolTable()
+	symbols := NewSymbolTable()
 	assert.IsTrue(t, symbols.IsValidSymbolName("test1"), "test1 is valid")
 	assert.IsTrue(t, symbols.IsValidSymbolName("Test1Q"), "Test1Q is valid")
 	assert.IsTrue(t, !symbols.IsValidSymbolName("$test"), "$test is invalid")
@@ -29,7 +27,7 @@ func TestSymbolTableIsValidSymbolName(t *testing.T) {
 }
 
 func TestSymbolTable(t *testing.T) {
-	symbols := newSymbolTable()
+	symbols := NewSymbolTable()
 
 	assert.Equals(t, nil, symbols.SetSymbol("test1", "value1"), "SetSymbol test1 to strinf")
 	assert.Equals(t, nil, symbols.SetSymbol("test2", "value2"), "SetSymbol test2 to string")
@@ -40,7 +38,7 @@ func TestSymbolTable(t *testing.T) {
 }
 
 func TestSymbolTableNonString(t *testing.T) {
-	symbols := newSymbolTable()
+	symbols := NewSymbolTable()
 	(*symbols)["test1"] = NewMessenger()
 	assert.Equals(t, nil, symbols.SetSymbol("test2", "text2"), "SetSymbol with text")
 	result, ok := symbols.NonTextSymbol("$test1")

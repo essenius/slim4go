@@ -1,21 +1,21 @@
 Demo query test
 
-!|query:test query|3|
-|n|2n|
-|1|2|
-|2|4|
-|3|6|
+!|query:test query|3 |
+|n                |2n|
+|1                |2 |
+|2                |4 |
+|3                |6 |
 
 You can also store a fixture in a symbol
 
 !|script|test query|2|
-|show|query|
-|$tq=|get fixture|
+|show   |query       |
+|$tq=   |get fixture |
 
-|define alias|
+|define alias       |
 |my query|query: $tq|
 
 |my query|
-|n|2n|
-|1|2|
-|2|4|
+|n  |2n  |
+|1  |2   |
+|2  |4   |

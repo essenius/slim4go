@@ -9,7 +9,7 @@
 //   is distributed on an "AS IS" BASIS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and limitations under the License.
 
-package slimcontext
+package context
 
 import (
 	"flag"
@@ -39,14 +39,6 @@ func exit(err error) {
 
 var theContext *Context
 
-// InjectContext is the IoC entry point to provide a Context.
-func InjectContext() *Context {
-	if theContext == nil {
-		theContext = newContext()
-	}
-	return theContext
-}
-
 // Initialize injects the command line arguments. We can't do that in the constructor
 // because we want to replace os.Args by a plain string slice during testing
 // (os.Args returns somthing different during testing)
@@ -73,7 +65,8 @@ func (context *Context) Initialize(args []string) {
 	context.ConnectionTimeout = time.Duration(*connectionTimeoutPtr * float64(time.Second))
 }
 
-func newContext() *Context {
+// New creates a new Context
+func New() *Context {
 	context := new(Context)
 	context.ErrorAction = exit
 	return context

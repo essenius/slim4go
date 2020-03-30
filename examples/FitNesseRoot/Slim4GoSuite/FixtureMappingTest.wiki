@@ -1,0 +1,14 @@
+This demo shows how you can use fixture fields and methods in test scripts.
+You can optionally use set (when setting) or get (when getting) as part of the command.
+Note you can only use public fields or methods.
+
+!|script  |Fixture Mapping       |
+|set Field|[a, b, c]             |
+|check    |Field       |[a, b, c]|
+|check    |get field   |[a, b, c]|
+|Method 1 |[d, e, f]             |
+|check    |get method 2|[d, e, f]|
+|check    |field       |[d, e, f]|
+|Field    |[g, h, i]             |
+|check    |Method2    |[g, h, i] |
+

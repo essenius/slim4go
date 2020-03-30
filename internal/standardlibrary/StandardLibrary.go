@@ -9,11 +9,12 @@
 //   is distributed on an "AS IS" BASIS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and limitations under the License.
 
-package slimprocessor
+package standardlibrary
 
 import (
 	"reflect"
 
+	"github.com/essenius/slim4go/internal/interfaces"
 	"github.com/essenius/slim4go/internal/slimentity"
 	"github.com/essenius/slim4go/internal/slimprotocol"
 )
@@ -24,12 +25,12 @@ const scriptTableActorName = "scriptTableActor"
 
 // StandardLibrary is the library that gets added to the library list by default.
 type StandardLibrary struct {
-	actors  *actorStack
-	objects *objectCollection
+	actors  interfaces.Stack
+	objects interfaces.Collector
 }
 
-// NewStandardLibrary instantiates a new StandardLibrary.
-func newStandardLibrary(actors *actorStack, objects *objectCollection) *StandardLibrary {
+// New instantiates a new StandardLibrary.
+func New(actors interfaces.Stack, objects interfaces.Collector) *StandardLibrary {
 	standardLibrary := new(StandardLibrary)
 	standardLibrary.actors = actors
 	standardLibrary.objects = objects
@@ -58,15 +59,15 @@ func (standardLibrary *StandardLibrary) Echo(input interface{}) interface{} {
 
 // GetFixture gets the currently executed fixture.
 func (standardLibrary *StandardLibrary) GetFixture() interface{} {
-	scriptTableActor := standardLibrary.objects.objectNamed(scriptTableActorName)
-	return (*scriptTableActor).instance()
+	scriptTableActor := standardLibrary.objects.Get(scriptTableActorName)
+	return scriptTableActor
 }
 
 // PopFixture pops a fixture from the stack.
 func (standardLibrary *StandardLibrary) PopFixture() slimentity.SlimEntity {
 	fixture := standardLibrary.actors.Pop()
 	if fixture != nil {
-		return standardLibrary.objects.setObjectInstance(scriptTableActorName, fixture)
+		return standardLibrary.objects.Set(scriptTableActorName, fixture)
 	}
 	return slimprotocol.Exception("Actor stack empty")
 }
@@ -76,5 +77,5 @@ func (standardLibrary *StandardLibrary) PushFixture() slimentity.SlimEntity {
 	currentFixture := standardLibrary.GetFixture()
 	newFixture := standardLibrary.CloneSymbol(currentFixture)
 	standardLibrary.actors.Push(currentFixture)
-	return standardLibrary.objects.setObjectInstance(scriptTableActorName, newFixture)
+	return standardLibrary.objects.Set(scriptTableActorName, newFixture)
 }

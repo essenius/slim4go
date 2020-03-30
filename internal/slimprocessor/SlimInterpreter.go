@@ -14,7 +14,8 @@ package slimprocessor
 import (
 	"time"
 
-	"github.com/essenius/slim4go/internal/slimcontext"
+	"github.com/essenius/slim4go/internal/interfaces"
+
 	"github.com/essenius/slim4go/internal/slimentity"
 	"github.com/essenius/slim4go/internal/slimprotocol"
 )
@@ -23,16 +24,12 @@ import (
 
 // SlimInterpreter processes incomming SlimLists and dispatches commands to its statement processor.
 type SlimInterpreter struct {
-	processor statementProcessor
+	processor interfaces.StatementProcessor
 	timeout   time.Duration
 }
 
-// InjectSlimInterpreter is the IoC entry point to provide a SlimInterpreter.
-func InjectSlimInterpreter() *SlimInterpreter {
-	return newSlimInterpreter(injectStatementProcessor(), slimcontext.InjectContext().InstructionTimeout)
-}
-
-func newSlimInterpreter(processor statementProcessor, timeout time.Duration) *SlimInterpreter {
+// NewSlimInterpreter creates a new Slim interpreter.
+func NewSlimInterpreter(processor interfaces.StatementProcessor, timeout time.Duration) *SlimInterpreter {
 	slimInterpreter := new(SlimInterpreter)
 	slimInterpreter.processor = processor
 	slimInterpreter.timeout = timeout
@@ -65,9 +62,9 @@ func (slimInterpreter *SlimInterpreter) dispatch(instruction *slimentity.SlimLis
 	case "callAndAssign":
 		return slimInterpreter.doCall(instruction, assign)
 	case "import":
-		return slimInterpreter.doImport(instruction)
+		return slimInterpreter.DoImport(instruction)
 	case "make":
-		return slimInterpreter.doMake(instruction)
+		return slimInterpreter.DoMake(instruction)
 	default:
 		return malformedInstruction(instruction)
 	}
@@ -95,7 +92,7 @@ func (slimInterpreter *SlimInterpreter) doAssign(instruction *slimentity.SlimLis
 	}
 	symbolName := instruction.StringAt(2)
 	value := instruction.StringAt(3)
-	slimInterpreter.processor.setSymbol(symbolName, value)
+	slimInterpreter.processor.SetSymbol(symbolName, value)
 	return slimprotocol.OK()
 }
 
@@ -117,29 +114,31 @@ func (slimInterpreter *SlimInterpreter) doCall(instruction *slimentity.SlimList,
 	instanceName := instruction.StringAt(startIndex)
 	methodName := instruction.StringAt(startIndex + 1)
 	args := instruction.TailAt(startIndex + 2)
-	result := slimInterpreter.processor.doCall(instanceName, methodName, args)
+	result := slimInterpreter.processor.DoCall(instanceName, methodName, args)
 	if minLength == assign {
-		slimInterpreter.processor.setSymbol(symbolName, result)
+		slimInterpreter.processor.SetSymbol(symbolName, result)
 	}
-	return slimInterpreter.processor.serializeObjectsIn(result)
+	return slimInterpreter.processor.SerializeObjectsIn(result)
 }
 
-func (slimInterpreter *SlimInterpreter) doImport(instruction *slimentity.SlimList) slimentity.SlimEntity {
+// DoImport executes an Import instruction.
+func (slimInterpreter *SlimInterpreter) DoImport(instruction *slimentity.SlimList) slimentity.SlimEntity {
 	if instruction.Length() < 3 {
 		return malformedInstruction(instruction)
 	}
 	pathName := instruction.StringAt(2)
-	return slimInterpreter.processor.doImport(pathName)
+	return slimInterpreter.processor.DoImport(pathName)
 }
 
-func (slimInterpreter *SlimInterpreter) doMake(instruction *slimentity.SlimList) slimentity.SlimEntity {
+// DoMake executes a Make instruction.
+func (slimInterpreter *SlimInterpreter) DoMake(instruction *slimentity.SlimList) slimentity.SlimEntity {
 	if instruction.Length() < 4 {
 		return malformedInstruction(instruction)
 	}
 	instanceName := instruction.StringAt(2)
 	fixtureName := instruction.StringAt(3)
 	args := instruction.TailAt(4)
-	return slimInterpreter.processor.doMake(instanceName, fixtureName, args)
+	return slimInterpreter.processor.DoMake(instanceName, fixtureName, args)
 }
 
 // Process takes an incoming set of instructions, dispatches to statement processor, and retrieves the result.

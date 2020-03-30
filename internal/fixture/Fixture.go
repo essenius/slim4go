@@ -44,14 +44,6 @@ func NewRegistry() *Registry {
 
 var registryInstance *Registry
 
-// InjectRegistry returns a registry (single instance).
-func InjectRegistry() *Registry {
-	if registryInstance == nil {
-		registryInstance = NewRegistry()
-	}
-	return registryInstance
-}
-
 // internal utility functions
 
 func typeWithoutPointer(name string) string {
@@ -121,4 +113,9 @@ func (registry *Registry) FixtureNamed(fixtureName string) interface{} {
 		}
 	}
 	return nil
+}
+
+// Length returns the number of items in the fixture registry.
+func (registry *Registry) Length() int {
+	return len(registry.constructor)
 }

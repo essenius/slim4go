@@ -9,7 +9,7 @@
 //   is distributed on an "AS IS" BASIS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and limitations under the License.
 
-package slimprocessor
+package standardlibrary
 
 import (
 	"testing"
@@ -18,7 +18,7 @@ import (
 )
 
 func TestSlimActorStack(t *testing.T) {
-	actors := new(actorStack)
+	actors := new(ActorStack)
 	assert.Equals(t, 0, actors.Length(), "Length is 0 at start")
 	assert.Equals(t, nil, actors.Head(), "Head is nil at start")
 	assert.Equals(t, nil, actors.Pop(), "Pop is nil at start")

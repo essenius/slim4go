@@ -20,9 +20,10 @@ import (
 )
 
 type Order struct {
-	ProductID string
-	Units     int
-	UnitPrice float64
+	ProductID  string
+	Units      int
+	UnitPrice  float64
+	unexported bool
 }
 
 func NewOrder() *Order {
@@ -33,40 +34,32 @@ func (order *Order) Price() float64 {
 	return order.UnitPrice * float64(order.Units)
 }
 
+func (order *Order) Parse(input string) {
+	panic("Parse failed")
+}
+
 func (order *Order) SetProduct(productID string, unitPrice float64) {
 	order.ProductID = productID
 	order.UnitPrice = unitPrice
 }
 
-func TestObjectWithPrefix(t *testing.T) {
-	objects := injectObjectCollection(injectParser())
-	// clean out object map -- objectcollection is a single instance
-	objects.objectMap = newObjectMap()
-	objects.addObject("test1", 1)
-	objects.addObject("test2", 2)
-	objects.addObject("library1", 3)
-	objects.addObject("all1", 4)
-	objects.addObject("library2", 5)
-	libraries := objects.objectsWithPrefix("library")
-	assert.Equals(t, 2, len(*libraries), "Length OK")
-	assert.Equals(t, 3, (*libraries)["library1"].instance(), "entry 1 exists")
-	assert.Equals(t, 5, (*libraries)["library2"].instance(), "entry 2 exists")
+type MockParser struct{}
+
+func (parser MockParser) CallFunction(function reflect.Value, args []string) (slimentity.SlimEntity, error) {
+	return nil, nil
 }
 
-func TestObject(t *testing.T) {
-	objects := injectObjectCollection(injectParser())
-	// clean out object map -- objectcollection is a single instance
-	objects.objectMap = newObjectMap()
-	assert.Equals(t, nil, objects.AnyObject(), "AnyObject on empty map returns nil")
-	objects.addObject("test1", 1)
-	assert.Equals(t, 1, objects.AnyObject().instance(), "AnyObject on collection with one entry returns that entry")
-	err := objects.setObjectInstance("nonexisting", 2)
-	assert.IsTrue(t, nil != err, "Error occurred")
-	assert.Equals(t, "instance not found", err.Error(), "Error message OK")
+func (parser MockParser) Parse(input string, targetType reflect.Type) (interface{}, error) {
+	return reflect.Zero(targetType).Interface(), nil
+}
+
+func (parser MockParser) ReplaceSymbolsIn(fixtureName string) string {
+	return ""
 }
 
 func TestObjectTryField(t *testing.T) {
-	anObject := newObject(reflect.ValueOf(NewOrder()), injectParser())
+	parser := new(MockParser)
+	anObject := newObject(reflect.ValueOf(NewOrder()), parser)
 	fields1 := []string{"SetUnits", "Units"}
 	entity1, err1 := anObject.tryField(fields1, slimentity.NewSlimListContaining([]slimentity.SlimEntity{"35"}))
 	assert.Equals(t, nil, err1, "SetUnits returns no error")
@@ -80,10 +73,27 @@ func TestObjectTryField(t *testing.T) {
 	fields3 := []string{"GetUnits", "Units"}
 	entity3, err3 := anObject.tryField(fields3, slimentity.NewSlimList())
 	assert.Equals(t, nil, err3, "GetUnits returns no error")
-	assert.Equals(t, "35", slimentity.ToString(entity3), "GetUnits returns right value")
+	assert.Equals(t, "0", slimentity.ToString(entity3), "GetUnits returns right value")
 
 	fields4 := []string{"UnitPrice", "GetUnitPrice"}
 	entity4, err4 := anObject.tryField(fields4, slimentity.NewSlimList())
 	assert.Equals(t, nil, err4, "no error get")
-	assert.Equals(t, "2.71", slimentity.ToString(entity4), "UnitPrice returns right value")
+	assert.Equals(t, "0", slimentity.ToString(entity4), "UnitPrice returns right value")
+
+	fields5 := []string{"unexported"}
+	_, err5 := anObject.tryField(fields5, slimentity.NewSlimList())
+	assert.Equals(t, "Can't get value for 'unexported'", err5.Error(), "error getting unexported")
+
+	fields6 := []string{"unexported"}
+	_, err6 := anObject.tryField(fields6, slimentity.NewSlimListContaining([]slimentity.SlimEntity{"true"}))
+	assert.Equals(t, "Can't set value for 'unexported'", err6.Error(), "error setting unexported")
+
+	fields7 := []string{"bogus"}
+	_, err7 := anObject.tryField(fields7, slimentity.NewSlimList())
+	assert.Equals(t, "bogus: Field not found", err7.Error(), "nonexistig field")
+
+	bogusObject := newObject(reflect.ValueOf(1), parser)
+	_, err8 := bogusObject.tryField(fields7, slimentity.NewSlimList())
+	assert.Equals(t, "bogus: Field not found", err8.Error(), "object is not a (pointer to a) struct")
+
 }

@@ -53,8 +53,6 @@ func IsTrue(t *testing.T, actual bool, description string) {
 	}
 }
 
-//type fn func() interface{}
-
 // Panics asserts whether a function panics.
 func Panics(t *testing.T, testFunction func(), expectedPanicMessage string, description string) {
 	defer func() {

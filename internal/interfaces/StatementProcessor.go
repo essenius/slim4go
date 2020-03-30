@@ -9,20 +9,17 @@
 //   is distributed on an "AS IS" BASIS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and limitations under the License.
 
-package slimserver
+package interfaces
 
 import (
-	"reflect"
-	"testing"
-
-	"github.com/essenius/slim4go/internal/assert"
+	"github.com/essenius/slim4go/internal/slimentity"
 )
 
-func TestSlimMessengerNew(t *testing.T) {
-	pipeMessenger := NewSlimMessenger(1, 0)
-	assert.Equals(t, reflect.TypeOf(new(slimPipe)), reflect.TypeOf(pipeMessenger), "Port 1 results in slimPipe")
-
-	socketMessenger := NewSlimMessenger(8485, 0)
-	assert.Equals(t, reflect.TypeOf(new(slimSocket)), reflect.TypeOf(socketMessenger), "Port 8485 results in slimSocket")
-	assert.Equals(t, 8485, socketMessenger.(*slimSocket).port, "Port OK in slimSocket")
+// StatementProcessor does the heavy lifting executing the Slim statements.
+type StatementProcessor interface {
+	DoCall(instanceName, methodName string, args *slimentity.SlimList) slimentity.SlimEntity
+	DoImport(value string) slimentity.SlimEntity
+	DoMake(instanceName, fixtureName string, args *slimentity.SlimList) slimentity.SlimEntity
+	SerializeObjectsIn(slimentity.SlimEntity) slimentity.SlimEntity
+	SetSymbol(symbol string, value interface{})
 }

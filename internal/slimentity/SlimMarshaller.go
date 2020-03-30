@@ -19,7 +19,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/essenius/slim4go/internal/utilities"
+	"github.com/essenius/slim4go/internal/apperrors"
 )
 
 const (
@@ -107,7 +107,7 @@ func (reader *slimReader) readRequest() (out SlimEntity, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			out = nil
-			err = errors.New(utilities.ErrorToString(r))
+			err = errors.New(apperrors.ErrorToString(r))
 		}
 	}()
 

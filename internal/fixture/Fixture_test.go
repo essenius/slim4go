@@ -46,7 +46,7 @@ func NewOrder() *Order {
 
 func TestFixtureNamespace(t *testing.T) {
 	registryInstance = nil
-	registry := InjectRegistry()
+	registry := NewRegistry()
 	registry.AddNamespace("test1")
 	assert.Equals(t, 1, len(registry.namespace), "one namespace")
 	registry.AddNamespace("test2")
@@ -67,7 +67,7 @@ func TestFixtureNamespace(t *testing.T) {
 
 func TestFixtureRegisterFixtures(t *testing.T) {
 	registryInstance = nil
-	registry := InjectRegistry()
+	registry := NewRegistry()
 	assert.Equals(t, nil, registry.AddFixture(NewOrder), "Add Fixure NewOrder succeeds")
 	assert.Equals(t, 1, len(registry.constructor), "one fixture added")
 	assert.Equals(t, nil, registry.AddFixturesFrom(NewFixtureFactory()), "AddFixturesFromFactory succeeded")

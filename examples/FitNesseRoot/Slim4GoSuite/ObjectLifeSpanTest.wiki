@@ -10,7 +10,7 @@ It also shows how you can temporarily set aside a fixture via push and pop.
 
 !|script          |memo object|C3PO|
 |check            |data       |C3PO|
-|$id=             |ID             |
+|$id=             |ID              |
 |R2D2 differs from|$id             |
 |check            |data       |C3PO|
 |check            |ID         |$id |

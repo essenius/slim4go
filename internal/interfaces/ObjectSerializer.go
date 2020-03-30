@@ -9,16 +9,14 @@
 //   is distributed on an "AS IS" BASIS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and limitations under the License.
 
-package utilities
+package interfaces
 
-import (
-	"fmt"
-	"testing"
+import "reflect"
 
-	"github.com/essenius/slim4go/internal/assert"
-)
-
-func TestUtilitiesErrorToString(t *testing.T) {
-	assert.Equals(t, "ok", ErrorToString("ok"), "string")
-	assert.Equals(t, "err", ErrorToString(fmt.Errorf("err")), "error")
+// ObjectSerializer stores and retrieves a string representation of an object. These are the functions Parser needs from the Object package
+type ObjectSerializer interface {
+	Deserialize(objectType reflect.Type, seralizedForm string) (interface{}, error)
+	/*IsObject(instance interface{}) bool
+	IsObjectType(instanceType reflect.Type) bool */
+	Serialize(instance interface{}) string
 }

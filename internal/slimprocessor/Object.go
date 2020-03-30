@@ -17,6 +17,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/essenius/slim4go/internal/apperrors"
+	"github.com/essenius/slim4go/internal/interfaces"
 	"github.com/essenius/slim4go/internal/slimentity"
 	"github.com/essenius/slim4go/internal/slimprotocol"
 )
@@ -26,15 +28,14 @@ import (
 
 type object struct {
 	instanceValue reflect.Value
-	theParser     *parser
-	symbols       *symbolTable
+	parser        interfaces.Parser
 }
 
-func newObject(instanceValue reflect.Value, aParser *parser) *object {
+// NewObject creates a new object instance.
+func newObject(instanceValue reflect.Value, parser interfaces.Parser) *object {
 	anObject := new(object)
 	anObject.instanceValue = instanceValue
-	anObject.symbols = aParser.symbols
-	anObject.theParser = aParser
+	anObject.parser = parser
 	return anObject
 }
 
@@ -51,7 +52,7 @@ func getField(field reflect.Value, name string) (slimentity.SlimEntity, error) {
 	if field.CanInterface() {
 		return slimentity.TransformCallResult([]reflect.Value{field}), nil
 	}
-	return nil, fmt.Errorf("Can't get value for %v", name)
+	return nil, fmt.Errorf("Can't get value for '%v'", name)
 }
 
 func hasFieldPrefix(name string, prefix string) bool {
@@ -82,6 +83,7 @@ func (anObject *object) instance() interface{} {
 	return anObject.instanceValue.Interface()
 }
 
+// InvokeMember invokes a function or sets/gets a field.
 func (anObject *object) InvokeMember(memberName string, args *slimentity.SlimList) (slimentity.SlimEntity, error) {
 	// We can only use exported methods or fields, which start with a capital.
 	// Since in the Java convention that FitNesse uses, methods are in camelCase, we need to capitalize the first letter.
@@ -89,19 +91,20 @@ func (anObject *object) InvokeMember(memberName string, args *slimentity.SlimLis
 	for _, name := range names {
 		method := anObject.instanceValue.MethodByName(name)
 		if method.IsValid() {
-			return anObject.theParser.callFunction(method, slimentity.ToSlice(args))
+			return anObject.parser.CallFunction(method, slimentity.ToSlice(args))
 		}
 	}
 	if result, err := anObject.tryField(names, args); err == nil {
 		return result, nil
 	}
-	return "", &notFoundError{"member", memberName}
+	return "", &apperrors.NotFoundError{Entity: "member", Description: memberName}
 }
 
-func (anObject *object) serialize() slimentity.SlimEntity {
+// Serialize returns the state of an object into a string format.
+func (anObject *object) Serialize() string {
 	entity, err := anObject.InvokeMember("ToString", slimentity.NewSlimList())
 	if err == nil {
-		return entity
+		return entity.(string)
 	}
 	return anObject.instanceValue.Type().String()
 }
@@ -109,19 +112,22 @@ func (anObject *object) serialize() slimentity.SlimEntity {
 func (anObject *object) setField(field reflect.Value, value slimentity.SlimEntity, name string) (slimentity.SlimEntity, error) {
 	if field.CanSet() {
 		fieldType := field.Type()
-		result, err := anObject.theParser.parse(slimentity.ToString(value), fieldType)
+		result, err := anObject.parser.Parse(slimentity.ToString(value), fieldType)
 		if err == nil {
 			field.Set(reflect.ValueOf(result))
 			return slimprotocol.Void(), nil
 		}
 	}
-	return nil, fmt.Errorf("Can't set value for %v", name)
+	return nil, fmt.Errorf("Can't set value for '%v'", name)
 }
 
 func (anObject *object) tryField(fieldNames []string, args *slimentity.SlimList) (slimentity.SlimEntity, error) {
 	if anObject.instanceValue.Kind() == reflect.Ptr {
-		elemObject := newObject(anObject.instanceValue.Elem(), anObject.theParser)
+		elemObject := newObject(anObject.instanceValue.Elem(), anObject.parser)
 		return elemObject.tryField(fieldNames, args)
+	}
+	if anObject.instanceValue.Kind() != reflect.Struct {
+		return nil, &apperrors.NotFoundError{Entity: "Field", Description: fieldNames[0]}
 	}
 	for _, name := range fieldNames {
 		field := anObject.instanceValue.FieldByName(name)
@@ -134,5 +140,5 @@ func (anObject *object) tryField(fieldNames []string, args *slimentity.SlimList)
 			}
 		}
 	}
-	return nil, &notFoundError{"Field", fieldNames[0]}
+	return nil, &apperrors.NotFoundError{Entity: "Field", Description: fieldNames[0]}
 }

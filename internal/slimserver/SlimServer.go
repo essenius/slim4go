@@ -14,35 +14,27 @@ package slimserver
 import (
 	"fmt"
 
-	"github.com/essenius/slim4go/internal/fixture"
+	"github.com/essenius/slim4go/internal/interfaces"
 	"github.com/essenius/slim4go/internal/slimentity"
 	"github.com/essenius/slim4go/internal/slimlog"
-	"github.com/essenius/slim4go/internal/slimprocessor"
 	"github.com/essenius/slim4go/internal/slimprotocol"
 )
 
 // SlimServer is the main object.
 type SlimServer struct {
-	fixtureRegistry *fixture.Registry
-	messenger       slimMessenger
-	processor       *slimprocessor.SlimInterpreter
+	fixtureRegistry interfaces.Registry
+	messenger       interfaces.SlimMessenger
+	interpreter     interfaces.SlimInterpreter
 }
 
 var slimServerInstance *SlimServer
 
-// InjectSlimServer provides a Slim server instance.
-func InjectSlimServer() *SlimServer {
-	if slimServerInstance == nil {
-		slimServerInstance = newSlimServer(fixture.InjectRegistry(), injectMessenger(), slimprocessor.InjectSlimInterpreter())
-	}
-	return slimServerInstance
-}
-
-func newSlimServer(fixtureRegistry *fixture.Registry, messenger slimMessenger, processor *slimprocessor.SlimInterpreter) *SlimServer {
+// NewSlimServer creates a new Slim Server.
+func NewSlimServer(fixtureRegistry interfaces.Registry, messenger interfaces.SlimMessenger, interpreter interfaces.SlimInterpreter) *SlimServer {
 	server := new(SlimServer)
 	server.fixtureRegistry = fixtureRegistry
 	server.messenger = messenger
-	server.processor = processor
+	server.interpreter = interpreter
 	return server
 }
 
@@ -68,9 +60,9 @@ func (server *SlimServer) Serve() error {
 			if request.(string) == slimprotocol.Bye() {
 				return nil
 			}
-			return fmt.Errorf("Encountered unexpected command %v", request.(string))
+			return fmt.Errorf("Encountered unexpected command '%v'", request.(string))
 		}
-		responseMessage := server.processor.Process(request.(*slimentity.SlimList))
+		responseMessage := server.interpreter.Process(request.(*slimentity.SlimList))
 		marshalledResponse := slimentity.Marshal(responseMessage)
 		slimlog.Trace.Println("Response: ", marshalledResponse)
 		server.messenger.SendMessage(marshalledResponse)

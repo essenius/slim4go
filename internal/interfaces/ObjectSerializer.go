@@ -16,7 +16,5 @@ import "reflect"
 // ObjectSerializer stores and retrieves a string representation of an object. These are the functions Parser needs from the Object package
 type ObjectSerializer interface {
 	Deserialize(objectType reflect.Type, seralizedForm string) (interface{}, error)
-	/*IsObject(instance interface{}) bool
-	IsObjectType(instanceType reflect.Type) bool */
 	Serialize(instance interface{}) string
 }

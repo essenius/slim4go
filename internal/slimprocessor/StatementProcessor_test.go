@@ -15,11 +15,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/essenius/slim4go/internal/fixture"
-	"github.com/essenius/slim4go/internal/standardlibrary"
-
 	"github.com/essenius/slim4go/internal/assert"
+	"github.com/essenius/slim4go/internal/fixture"
 	"github.com/essenius/slim4go/internal/slimentity"
+	"github.com/essenius/slim4go/internal/standardlibrary"
 )
 
 const instanceName = "scriptTableActor"

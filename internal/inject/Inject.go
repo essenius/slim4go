@@ -55,7 +55,7 @@ func ObjectHandler() *slimprocessor.ObjectHandler {
 	if objectHandlerInstance == nil {
 		// This is a bit tricky as both Parser and StandardLibrary need this ObjectHandler.
 		// StandardLibrary is no issue as it has to be injected when objectHandlerInstance exists,
-		// but Parser is, as we'd like to inject it via the constructor.
+		// but Parser is, as we'd like to inject it via the constructor (TODO).
 		// For now we use dependency injection of ObjectHandler into Parser via a method.
 		parser := Parser()
 		objectHandlerInstance = slimprocessor.NewObjectHandler(parser)

@@ -102,7 +102,6 @@ func (handler *ObjectHandler) Length() int {
 // InvokeMemberOn finds an instance, and invokes a member on it with the given parameters.
 func (handler *ObjectHandler) InvokeMemberOn(instance interface{}, memberName string, args *slimentity.SlimList) (slimentity.SlimEntity, error) {
 	anObject := handler.newObject(reflect.ValueOf(instance))
-	//var result slimentity.SlimEntity
 	result, err := anObject.InvokeMember(memberName, args)
 	if err != nil {
 		return nil, err

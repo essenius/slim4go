@@ -69,21 +69,16 @@ func (symbols *SymbolTable) Get(symbolName string) interface{} {
 
 // Set sets an entry in the symbol table.
 func (symbols *SymbolTable) Set(symbolName string, value interface{}) error {
-	return symbols.SetSymbol(symbolName, value)
+	if symbols.IsValidSymbolName(symbolName) {
+		(*symbols)[symbolName] = value
+		return nil
+	}
+	return fmt.Errorf("Invalid symbol name: %v", symbolName)
 }
 
 // Length gets the number of items in the symbol table. TODO: not used. Optimize interfaces.
 func (symbols *SymbolTable) Length() int {
 	return len(*symbols)
-}
-
-// SetSymbol should be eliminated.
-func (symbols *SymbolTable) SetSymbol(symbol string, value interface{}) error {
-	if symbols.IsValidSymbolName(symbol) {
-		(*symbols)[symbol] = value
-		return nil
-	}
-	return fmt.Errorf("Invalid symbol name: %v", symbol)
 }
 
 // ValueOf should be eliminated.

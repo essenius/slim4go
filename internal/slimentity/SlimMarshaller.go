@@ -68,8 +68,8 @@ func (reader *slimReader) readExactBytes(numberOfBytes int) []byte {
 	// Note that this means it isn't necessarily the number of characters - SLIM uses UTF-8 in text.
 
 	buffer := make([]byte, numberOfBytes)
-	if _, err := io.ReadAtLeast(reader, buffer, numberOfBytes); err != nil {
-		panic(err.Error())
+	if n, err := io.ReadAtLeast(reader, buffer, numberOfBytes); err != nil {
+		panic(fmt.Errorf("readExactBytes: Expected %v bytes from Slim client, but got %v", numberOfBytes, n))
 	}
 	return buffer
 }

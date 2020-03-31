@@ -29,18 +29,18 @@ func TestSymbolTableIsValidSymbolName(t *testing.T) {
 func TestSymbolTable(t *testing.T) {
 	symbols := NewSymbolTable()
 
-	assert.Equals(t, nil, symbols.SetSymbol("test1", "value1"), "SetSymbol test1 to strinf")
-	assert.Equals(t, nil, symbols.SetSymbol("test2", "value2"), "SetSymbol test2 to string")
+	assert.Equals(t, nil, symbols.Set("test1", "value1"), "Set test1 to strinf")
+	assert.Equals(t, nil, symbols.Set("test2", "value2"), "Set test2 to string")
 	aDemoStruct1 := new(demoStruct1)
 	aDemoStruct1.Parse("hi from aDemoStruct1")
-	assert.Equals(t, nil, symbols.SetSymbol("test3", aDemoStruct1), "SetSymbol test3 to object")
-	assert.Equals(t, "Invalid symbol name: $_test3", symbols.SetSymbol("$_test3", "_value3").Error(), "invalid name $_test3")
+	assert.Equals(t, nil, symbols.Set("test3", aDemoStruct1), "Set test3 to object")
+	assert.Equals(t, "Invalid symbol name: $_test3", symbols.Set("$_test3", "_value3").Error(), "invalid name $_test3")
 }
 
 func TestSymbolTableNonString(t *testing.T) {
 	symbols := NewSymbolTable()
 	(*symbols)["test1"] = NewMessenger()
-	assert.Equals(t, nil, symbols.SetSymbol("test2", "text2"), "SetSymbol with text")
+	assert.Equals(t, nil, symbols.Set("test2", "text2"), "Set with text")
 	result, ok := symbols.NonTextSymbol("$test1")
 	assert.IsTrue(t, ok, "Identified non-text symbol")
 	assert.Equals(t, "*slimprocessor.Messenger", reflect.TypeOf(result).String(), "type correctly identified")

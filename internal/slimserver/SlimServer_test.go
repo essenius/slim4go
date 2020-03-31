@@ -22,7 +22,6 @@ import (
 
 	"github.com/essenius/slim4go/internal/assert"
 	"github.com/essenius/slim4go/internal/fixture"
-	"github.com/essenius/slim4go/internal/slimlog"
 	"github.com/essenius/slim4go/internal/slimprocessor"
 	"github.com/essenius/slim4go/internal/standardlibrary"
 )
@@ -48,13 +47,12 @@ func newTestMessenger(t *testing.T, input []string, output []string, description
 
 // Read receives a number of bytes from a string slice
 func (messenger *testMessenger) Read(buffer []byte) (int, error) {
-	if len(messenger.input) < messenger.readIndex {
-		assert.IsTrue(messenger.t, false, "EOF")
+	if len(messenger.input) < messenger.readIndex+1 {
+		return 0, fmt.Errorf("EOF")
 	}
 	messenger.reader = strings.NewReader(messenger.input[messenger.readIndex])
 	messenger.readIndex++
 	readBytes, err := io.ReadAtLeast(messenger.reader, buffer, 1)
-	fmt.Printf("%v: Read is returning %v bytes", messenger.description, readBytes)
 	return readBytes, err
 }
 
@@ -70,7 +68,6 @@ func (messenger *testMessenger) Listen() error {
 
 // SendMessage emulates sending a message. It returns an error if desciption prefix is SendError.
 func (messenger *testMessenger) SendMessage(message string) error {
-	slimlog.Trace.Println(message)
 	assert.Equals(messenger.t, messenger.output[messenger.writeIndex], message,
 		fmt.Sprintf("%v line %v", messenger.description, messenger.writeIndex))
 	messenger.writeIndex++
@@ -99,8 +96,7 @@ func TestServeErrorResponses(t *testing.T) {
 	messenger4 := newTestMessenger(t, []string{"000005:bye"}, []string{"Slim -- V0.5\n"}, "Test 3 - size wrong")
 	slimServer4 := NewSlimServer(nil, messenger4, nil)
 	err4 := slimServer4.Serve()
-	// TODO: make this error message a bit clearer. It's a default message passing through in the marshaller
-	assert.Equals(t, "runtime error: index out of range [1] with length 1", err4.Error(), "Error sending")
+	assert.Equals(t, "readExactBytes: Expected 5 bytes from Slim client, but got 3", err4.Error(), "Error sending")
 }
 
 func TestServerServe(t *testing.T) {

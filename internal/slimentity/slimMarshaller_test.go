@@ -57,7 +57,7 @@ func TestSlimMarshallerReadRequestFail(t *testing.T) {
 	}{
 		{"", "readLength: Could not find next delimiter ':' (EOF)", "Empty message"},
 		{"00a:", "readLength: Could not interpret length '00a'", "Wrong length spec"},
-		{"0000017:[000001:", "unexpected EOF", "Incomplete message"},
+		{"0000017:[000001:", "readExactBytes: Expected 17 bytes from Slim client, but got 8", "Incomplete message"},
 		{"000026:[000001:000009:Hi there.:q", "skipByte: Expected ']' but found 'q'", "Wrong list delimiter"},
 		{"000026:[000001:000009:Hi there.:", "SkipByte: No input available", "missing final delimiter"},
 		{"", "readLength: Could not find next delimiter ':' (EOF)", "Empty message"},

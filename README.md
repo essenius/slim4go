@@ -1,7 +1,7 @@
 # slim4go
 FitNesse Slim server for Go
 
-As any ![Slim server](http://fitnesse.org/FitNesse.UserGuide.WritingAcceptanceTests.SliM.SlimProtocol), slim4go waits for Slim requests to arrive, parses and executes them, and sends the responses back.
+As any [Slim server](http://fitnesse.org/FitNesse.UserGuide.WritingAcceptanceTests.SliM.SlimProtocol), slim4go waits for Slim requests to arrive, parses and executes them, and sends the responses back.
 
 Dependency injection and interfaces are used to keep things as isolated as possible and with that testable.
 

@@ -1,6 +1,9 @@
 # slim4go
 FitNesse Slim server for Go
 
+As any Slim server, slim4go waits for Slim requests to arrive, parses and executes them, and sends the responses back.
+
+
 See cmd/slim4godemo for an example of how to use.
 
 Package Structure:

@@ -21,7 +21,7 @@ import (
 
 // Definitions and constructors for Fixture
 
-// A fixure is what FitNesse documentation often calls a class.
+// A fixture is what FitNesse documentation often calls a class.
 // A constructor is a function that creates the object, and a factory is an object that provides constructor methods.
 // Using interface{} is the only type I know of that can contain a function with an unspecified number of parameters and return values.
 // We need this because the design is based on allowing maximum freedom for the fixture developers.
